@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2025 Android project OpenVision API
+  ~ All rights reserved.
+  ~ Project: My Application
+  ~ File: arrays.xml
+  ~ Last Modified: 17/10/2025 0:56
+  -->
+
+<!-- arrays.xml -->
+<resources>
+    <string-array name="photo_quality">
+        <item>High</item>
+        <item>Medium</item>
+        <item>Low</item>
+    </string-array>
+    <string-array name="languages">
+        <item>English</item>
+        <item>Vietnamese</item>
+        <item>French</item>
+    </string-array>
+</resources>

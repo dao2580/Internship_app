@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2025 Android project OpenVision API
+  ~ All rights reserved.
+  ~ Project: My Application
+  ~ File: strings.xml
+  ~ Last Modified: 17/10/2025 0:56
+  -->
+
+<resources>
+    <string name="app_name">CamStudy</string>
+    <string name="title_home">Home</string>
+    <string name="title_camera">Camera</string>
+    <string name="title_history">History</string>
+    <string name="title_settings">Settings</string>
+    <string name="welcome_back">Welcome back!</string>
+    <string name="welcome_subtitle">Learn with your Camera!</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="take_photo_desc">Capture beautiful moments</string>
+    <string name="view_history">View History</string>
+    <string name="view_history_desc">Review your previous translations</string>
+    <string name="photo_history">History</string>
+    <string name="camera_permission_required">Camera permission is required</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="capture">Capture</string>
+    <string name="switch_camera">Switch Camera</string>
+    <string name="gallery">Gallery</string>
+
+    <!-- Login -->
+    <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign in</string>
+    <string name="register">Register</string>
+    <string name="full_name">Full Name</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="back_to_login">Back to Login</string>
+
+    <!-- Welcome screen -->
+    <string name="tex1">Welcome to</string>
+    <string name="tex2"> CamStudy</string>
+    <string name="tex3">Explore the world through your camera</string>
+    <string name="start">Start</string>
+
+    <!-- Settings -->
+    <string name="flash_icon">Flash icon</string>
+    <string name="delete_icon">Delete icon</string>
+    <string name="logout_icon">Logout icon</string>
+    <string name="dark_mode_icon">Dark mode icon</string>
+
+    <!-- Photo Zoom -->
+    <string name="back_button">Back</string>
+    <string name="zoomed_photo">Zoomed photo</string>
+
+    <!-- Photo Preview & Object Detection -->
+    <string name="analyzing_image">Analyzing image...</string>
+    <string name="back_to_camera">Back to Camera</string>
+    <string name="no_objects_detected">No objects detected</string>
+    <string name="object_detection_unavailable">Object detection not available</string>
+    <string name="detection_failed">Detection failed</string>
+    <string name="import_image">Import Image</string>
+    <string name="save_photo">Save Photo</string>
+    <string name="proceed_to_translation">Proceed to Translation</string>
+
+    <!-- Translation Fragment -->
+    <string name="no_objects_placeholder">No objects detected. Using placeholder:</string>
+    <string name="placeholder_car">Car</string>
+    <string name="detected_single_object">Detected object:</string>
+    <string name="detected_multiple_objects">Multiple objects detected. Select one:</string>
+    <string name="enter_word_to_translate">Please enter a word to translate</string>
+    <string name="select_detected_word">Select detected word</string>
+    <string name="source_text_english">Source Text: </string>
+    <string name="translation">Translation</string>
+    <string name="translate">Translate</string>
+    <string name="translation_tips">ℹ️ Translation Tips</string>
+    <string name="translation_tips_content">• Translations are shown in Vietnamese, Japanese, and French\n• For real-time translation, integrate Google Translate API\n• Single words work best for object detection</string>
+    <string name="camera_icon">Camera Icon</string>
+    <string name="_1_0x">1.0x</string>
+    <string name="_2_0x">2.0x</string>
+    <string name="camera_controls">Camera Controls</string>
+    <string name="flash_button">Flash Button</string>
+    <string name="Appdesc">Cam Study is an application with simple object detection. It then translates the detected object into other languages, helping you learn what the object is called in different languages.</string>
+</resources>

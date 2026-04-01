@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) 2025 Android project OpenVision API
+  ~ All rights reserved.
+  ~ Project: My Application
+  ~ File: nav_graph.xml
+  ~ Last Modified: 17/10/2025 0:56
+  -->
+
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_welcome">
+
+    <fragment
+        android:id="@+id/nav_welcome"
+        android:name="vn.edu.usth.myapplication.WelcomeFragment"
+        android:label="Welcome"
+        tools:layout="@layout/fragment_welcome" />
+
+    <fragment
+        android:id="@+id/nav_login"
+        android:name="vn.edu.usth.myapplication.LoginFragment"
+        android:label="@string/login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_nav_login_to_nav_home"
+            app:destination="@id/nav_home"
+            app:popUpTo="@id/nav_login"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_register"
+        android:name="vn.edu.usth.myapplication.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register" />
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="vn.edu.usth.myapplication.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_camera"
+        android:name="vn.edu.usth.myapplication.EmbeddedCameraFragment"
+        android:label="@string/title_camera"
+        tools:layout="@layout/fragment_camera" />
+
+    <fragment
+        android:id="@+id/nav_history"
+        android:name="vn.edu.usth.myapplication.HistoryFragment"
+        android:label="@string/title_history"
+        tools:layout="@layout/fragment_history" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="vn.edu.usth.myapplication.SettingsFragment"
+        android:label="@string/title_settings"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/nav_photo_preview"
+        android:name="vn.edu.usth.myapplication.PhotoPreviewFragment"
+        android:label="Photo Preview"
+        tools:layout="@layout/fragment_photo_preview">
+        <argument
+            android:name="photo_uri"
+            app:argType="string" />
+        <argument
+            android:name="timestamp"
+            android:defaultValue="0L"
+            app:argType="long" />
+        <argument
+            android:name="is_temp"
+            android:defaultValue="false"
+            app:argType="boolean" />
+        <action
+            android:id="@+id/action_photoPreviewFragment_to_translationFragment"
+            app:destination="@id/nav_translation" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_translation"
+        android:name="vn.edu.usth.myapplication.TranslationFragment"
+        android:label="Translation"
+        tools:layout="@layout/fragment_translation">
+        <argument
+            android:name="detected_objects"
+            app:argType="string[]"
+            app:nullable="true" />
+        <argument
+            android:name="photo_uri"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="user_input_text"
+            app:argType="string"
+            app:nullable="true" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/nav_streaming"
+        android:name="vn.edu.usth.myapplication.StreamingFragment"
+        android:label="Streaming"
+        tools:layout="@layout/fragment_streaming" />
+
+</navigation>
