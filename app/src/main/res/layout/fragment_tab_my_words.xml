@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_color">
+
+    <!-- Header đếm từ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Từ đã học"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_text" />
+
+        <TextView
+            android:id="@+id/txt_word_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 từ"
+            android:textSize="14sp"
+            android:textColor="@color/primary_color" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txt_empty_words"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Chưa có từ nào được lưu.\nHãy detect và bấm 'Lưu từ' để bắt đầu!"
+        android:textColor="@color/secondary_text"
+        android:textSize="15sp"
+        android:gravity="center"
+        android:padding="40dp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_my_words"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
+
+</LinearLayout>

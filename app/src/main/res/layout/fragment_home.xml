@@ -1,12 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ~ Copyright (c) 2025 Android project OpenVision API
-  ~ All rights reserved.
-  ~ Project: My Application
-  ~ File: fragment_home.xml
-  ~ Last Modified: 17/10/2025 0:56
-  -->
-
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -108,8 +100,7 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <!-- Take Photo Card -->
-        <!-- Detection Mode: One-Shot + Streaming -->
+        <!-- One-Shot + Streaming -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -191,8 +182,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_marginBottom="8dp"
-                        android:src="@drawable/ic_camera_24"
-                        />
+                        android:src="@drawable/ic_streaming" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -206,7 +196,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Realtime camera"
+                        android:text="Videocam"
                         android:textColor="@color/secondary_text"
                         android:textSize="12sp" />
 
@@ -216,12 +206,12 @@
 
         </LinearLayout>
 
-        <!-- View History Card -->
+        <!-- Quiz Card (thay thế View History) -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_view_history"
+            android:id="@+id/card_quiz"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="16dp"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
@@ -253,7 +243,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="4dp"
-                        android:text="@string/view_history"
+                        android:text="Quiz"
                         android:textColor="@color/primary_text"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -261,7 +251,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/view_history_desc"
+                        android:text="Review learned word"
                         android:textColor="@color/secondary_text"
                         android:textSize="14sp" />
 
@@ -322,7 +312,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Import your own image"
+                        android:text="Import your image"
                         android:textColor="@color/secondary_text"
                         android:textSize="14sp" />
 

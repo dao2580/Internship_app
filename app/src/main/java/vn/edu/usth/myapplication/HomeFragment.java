@@ -56,10 +56,14 @@ public class HomeFragment extends Fragment {
         });
 
         // Set up navigation for View History card
-        MaterialCardView viewHistoryCard = view.findViewById(R.id.card_view_history);
-        viewHistoryCard.setOnClickListener(v -> {
-            NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
-            navController.navigate(R.id.nav_history);
+        MaterialCardView quizCard = view.findViewById(R.id.card_quiz);
+        quizCard.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putInt("selected_tab", 2); // 2 = Quiz
+
+            NavController navController =
+                    Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
+            navController.navigate(R.id.nav_history, bundle);
         });
 
         // Set up navigation for Import Image card
@@ -71,10 +75,9 @@ public class HomeFragment extends Fragment {
 
         // Streaming mode
         MaterialCardView streamingCard = view.findViewById(R.id.card_streaming);
-        streamingCard.setOnClickListener(v -> {
-            NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
-            navController.navigate(R.id.nav_streaming);
-        });
+        streamingCard.setOnClickListener(v ->
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.nav_streaming));
 
         return view;
     }

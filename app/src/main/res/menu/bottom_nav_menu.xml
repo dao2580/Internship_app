@@ -16,11 +16,11 @@
     <item
         android:id="@+id/nav_history"
         android:icon="@drawable/ic_history_24"
-        android:title="History" />
+        android:title="Learning" />
 
     <item
         android:id="@+id/nav_settings"
         android:icon="@drawable/ic_settings_24"
-        android:title="Settings" />
+        android:title="Setting" />
 
 </menu>

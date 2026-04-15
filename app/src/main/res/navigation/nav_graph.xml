@@ -48,11 +48,18 @@
         android:label="@string/title_camera"
         tools:layout="@layout/fragment_camera" />
 
+    <!-- Đổi nav_history trỏ sang LearningProgressFragment -->
     <fragment
         android:id="@+id/nav_history"
-        android:name="vn.edu.usth.myapplication.HistoryFragment"
-        android:label="@string/title_history"
-        tools:layout="@layout/fragment_history" />
+        android:name="vn.edu.usth.myapplication.LearningProgressFragment"
+        android:label="Learning Progress"
+        tools:layout="@layout/fragment_learning_progress">
+
+        <argument
+            android:name="selected_tab"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_settings"

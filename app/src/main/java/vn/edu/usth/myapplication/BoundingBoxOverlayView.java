@@ -1,117 +1,110 @@
 package vn.edu.usth.myapplication;
 
 import android.content.Context;
-import android.graphics.*;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class BoundingBoxOverlayView extends View {
 
-    public interface OnObjectSelectedListener {
-        void onObjectSelected(String labelEn, String labelVi);
-    }
+    // Mỗi detection result kèm nhãn VI để vẽ
 
-    public static class DetectedBox {
-        public final RectF box;
-        public final String labelEn, labelVi;
-        public final float confidence;
-        public DetectedBox(RectF box, String en, String vi, float conf) {
-            this.box = box; labelEn = en; labelVi = vi; confidence = conf;
+    public static class DetectionItem {
+        public final YoloV8Classifier.Result result;
+        public final String labelVi;
+
+        public DetectionItem(YoloV8Classifier.Result result, String labelVi) {
+            this.result = result;
+            this.labelVi = labelVi;
+
         }
     }
 
-    private static class BtnArea {
-        final RectF rect; final DetectedBox item;
-        BtnArea(RectF r, DetectedBox d) { rect = r; item = d; }
+    private final Paint boxPaint = new Paint();
+    private final Paint textBg = new Paint();
+    private final Paint textPaint = new Paint();
+
+    private List<DetectionItem> items = new ArrayList<>();
+
+    // Tỷ lệ scale từ ảnh gốc ra màn hình
+    private float scaleX = 1f, scaleY = 1f;
+
+    public BoundingBoxOverlayView(Context context) {
+        super(context);
+        init();
     }
 
-    private List<DetectedBox> boxes = new ArrayList<>();
-    private final List<BtnArea> btnAreas = new ArrayList<>();
-    private OnObjectSelectedListener listener;
-
-    private final Paint pBox   = new Paint(), pLbBg  = new Paint(),
-            pEn    = new Paint(), pVi    = new Paint(),
-            pConf  = new Paint(), pBtn   = new Paint(),
-            pBtnTx = new Paint();
-
-    public BoundingBoxOverlayView(Context c) { super(c); init(); }
-    public BoundingBoxOverlayView(Context c, AttributeSet a) { super(c, a); init(); }
-    public BoundingBoxOverlayView(Context c, AttributeSet a, int s) { super(c, a, s); init(); }
+    public BoundingBoxOverlayView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
 
     private void init() {
-        pBox.setStyle(Paint.Style.STROKE);
-        pBox.setColor(Color.parseColor("#00E5FF")); pBox.setStrokeWidth(4f); pBox.setAntiAlias(true);
+        boxPaint.setStyle(Paint.Style.STROKE);
+        boxPaint.setStrokeWidth(3f);
+        boxPaint.setColor(Color.parseColor("#00C896")); // teal
 
-        pLbBg.setStyle(Paint.Style.FILL); pLbBg.setColor(Color.parseColor("#CC000000"));
+        textBg.setStyle(Paint.Style.FILL);
+        textBg.setColor(Color.parseColor("#CC00C896"));
 
-        pEn.setColor(Color.WHITE); pEn.setTextSize(42f); pEn.setFakeBoldText(true); pEn.setAntiAlias(true);
-        pVi.setColor(Color.parseColor("#FFD600")); pVi.setTextSize(34f); pVi.setAntiAlias(true);
-        pConf.setColor(Color.parseColor("#99FFFFFF")); pConf.setTextSize(28f); pConf.setAntiAlias(true);
-
-        pBtn.setStyle(Paint.Style.FILL); pBtn.setColor(Color.parseColor("#FF5722")); pBtn.setAntiAlias(true);
-        pBtnTx.setColor(Color.WHITE); pBtnTx.setTextSize(30f); pBtnTx.setFakeBoldText(true); pBtnTx.setAntiAlias(true);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextSize(36f);
+        textPaint.setFakeBoldText(true);
+        textPaint.setAntiAlias(true);
     }
 
-    public void setOnObjectSelectedListener(OnObjectSelectedListener l) { listener = l; }
+    /**
+     * Gọi từ StreamingFragment sau khi detect xong.
+     *
+     * @param items  danh sách detection + nhãn VI
+     * @param imgW   chiều rộng frame gốc (dùng để tính scale)
+     * @param imgH   chiều cao frame gốc
+     */
+    private List<DetectionItem> detections = new ArrayList<>();
+    private int imageW = 1;
+    private int imageH = 1;
 
-    public void setBoxes(List<DetectedBox> list) {
-        boxes = list != null ? list : new ArrayList<>();
+    public void setDetections(List<DetectionItem> items, int imageW, int imageH) {
+        this.detections = items != null ? items : new ArrayList<>();
+        this.imageW = imageW;
+        this.imageH = imageH;
         postInvalidate();
     }
 
-    public void clear() { boxes = new ArrayList<>(); postInvalidate(); }
+    public void clear() {
+        detections = new ArrayList<>();
+        postInvalidate();
+    }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        btnAreas.clear();
-        int vW = getWidth(), vH = getHeight();
 
-        for (DetectedBox d : boxes) {
-            float l = Math.max(2f, d.box.left),    t = Math.max(2f, d.box.top);
-            float r = Math.min(vW-2f, d.box.right), b = Math.min(vH-2f, d.box.bottom);
-            if (r <= l || b <= t) continue;
+        if (detections == null || detections.isEmpty()) return;
+        if (imageW <= 0 || imageH <= 0) return;
 
-            // Bounding box
-            canvas.drawRect(l, t, r, b, pBox);
+        float scaleX = (float) getWidth() / imageW;
+        float scaleY = (float) getHeight() / imageH;
 
-            // Label nền + tên EN trắng + tên VI vàng
-            float lbW = Math.max(pEn.measureText(d.labelEn), pVi.measureText(d.labelVi)) + 24f;
-            float lbTop = (t - 90f >= 0) ? t - 90f : b;
-            canvas.drawRect(l, lbTop, l + lbW, lbTop + 90f, pLbBg);
-            canvas.drawText(d.labelEn, l + 10f, lbTop + 38f, pEn);
-            canvas.drawText(d.labelVi, l + 10f, lbTop + 78f, pVi);
+        for (DetectionItem item : detections) {
+            YoloV8Classifier.Result r = item.result;
 
-            // Confidence
-            String cs = String.format("%.0f%%", d.confidence * 100);
-            canvas.drawText(cs, r - pConf.measureText(cs) - 6f, t + 30f, pConf);
+            float left = r.left * scaleX;
+            float top = r.top * scaleY;
+            float right = r.right * scaleX;
+            float bottom = r.bottom * scaleY;
 
-            // Nút "Học từ này"
-            String btnStr = " Học từ này ";
-            float btnW = pBtnTx.measureText(btnStr) + 8f, btnH = 54f;
-            float btnL = l, btnT = b + 8f;
-            if (btnT + btnH > vH) btnT = b - btnH - 8f;
-            if (btnL + btnW > vW) btnL = vW - btnW - 4f;
-            RectF btnRect = new RectF(btnL, btnT, btnL + btnW, btnT + btnH);
-            canvas.drawRoundRect(btnRect, 14f, 14f, pBtn);
-            canvas.drawText(btnStr, btnL + 4f, btnT + 36f, pBtnTx);
-            btnAreas.add(new BtnArea(btnRect, d));
+            canvas.drawRect(left, top, right, bottom, boxPaint);
+
+            String text = r.label + " / " + item.labelVi + " " + String.format("%.2f", r.conf);
+            canvas.drawText(text, left, Math.max(top - 10, 40), textPaint);
         }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent e) {
-        if (e.getAction() == MotionEvent.ACTION_UP) {
-            for (BtnArea ba : btnAreas) {
-                if (ba.rect.contains(e.getX(), e.getY()) && listener != null) {
-                    listener.onObjectSelected(ba.item.labelEn, ba.item.labelVi);
-                    return true;
-                }
-            }
-        }
-        return super.onTouchEvent(e);
     }
 }
+

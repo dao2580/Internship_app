@@ -80,8 +80,7 @@ dependencies {
     implementation(libs.camerax.view)
 
     // TensorFlow Lite for object detection
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.0")
-    implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.0")
+    implementation("com.google.ai.edge.litert:litert:1.4.1")
 
     // Azure Cognitive Services Translator
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -97,5 +96,16 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // Room
+    implementation("androidx.room:room-runtime:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
+
+// ViewModel + LiveData
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.7.0")
+
+// ViewPager2
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
 
 }
