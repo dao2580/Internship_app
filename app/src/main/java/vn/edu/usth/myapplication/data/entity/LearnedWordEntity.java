@@ -21,9 +21,13 @@ public class LearnedWordEntity {
     public String translated;
     public String targetLang;
     public String mode;
+
     public int timesSeen;
     public int timesCorrect;
     public int timesWrong;
+
+    public boolean isFavorite;
+
     public long createdAt;
     public long lastSeenAt;
 
@@ -31,6 +35,7 @@ public class LearnedWordEntity {
         this.timesSeen = 1;
         this.timesCorrect = 0;
         this.timesWrong = 0;
+        this.isFavorite = false;
         this.createdAt = System.currentTimeMillis();
         this.lastSeenAt = System.currentTimeMillis();
     }

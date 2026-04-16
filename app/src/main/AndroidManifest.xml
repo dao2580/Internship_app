@@ -21,6 +21,7 @@
         android:maxSdkVersion="32" />
     <!-- Android 13+ scoped media read permission -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- Camera features -->
     <uses-feature android:name="android.hardware.camera" android:required="true" />

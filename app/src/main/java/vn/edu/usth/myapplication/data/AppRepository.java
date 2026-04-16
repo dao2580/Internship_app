@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import vn.edu.usth.myapplication.data.entity.LearnedWordEntity;
 import vn.edu.usth.myapplication.data.entity.QuizResultEntity;
+import vn.edu.usth.myapplication.data.entity.QuizSessionEntity;
 
 public class AppRepository {
 
@@ -30,8 +31,10 @@ public class AppRepository {
             String safeLabelEn = labelEn.trim();
             String safeLabelVi = labelVi != null ? labelVi.trim() : "";
             String safeTranslated = translated != null ? translated.trim() : "";
-            String safeTargetLang = (targetLang != null && !targetLang.trim().isEmpty()) ? targetLang.trim() : "vi";
-            String safeMode = (mode != null && !mode.trim().isEmpty()) ? mode.trim() : "manual";
+            String safeTargetLang = (targetLang != null && !targetLang.trim().isEmpty())
+                    ? targetLang.trim() : "vi";
+            String safeMode = (mode != null && !mode.trim().isEmpty())
+                    ? mode.trim() : "manual";
 
             LearnedWordEntity existing = db.learnedWordDao()
                     .findByLabelAndLang(safeEmail, safeLabelEn, safeTargetLang);
@@ -84,17 +87,66 @@ public class AppRepository {
         executor.execute(() -> db.learnedWordDao().markWrong(wordId, System.currentTimeMillis()));
     }
 
+    public void saveQuizSession(String sessionId, String email, String targetLang, String sourceMode,
+                                int totalQuestions, int correctAnswers,
+                                int earnedPoints, int maxPoints) {
+        executor.execute(() -> {
+            if (email == null || email.trim().isEmpty()) return;
+            if (sessionId == null || sessionId.trim().isEmpty()) return;
+
+            QuizSessionEntity s = new QuizSessionEntity();
+            s.sessionId = sessionId.trim();
+            s.userEmail = email.trim();
+            s.targetLang = targetLang != null ? targetLang : "";
+            s.sourceMode = sourceMode != null ? sourceMode : "";
+            s.totalQuestions = totalQuestions;
+            s.correctAnswers = correctAnswers;
+            s.earnedPoints = earnedPoints;
+            s.maxPoints = maxPoints;
+
+            db.quizSessionDao().insert(s);
+        });
+    }
+
     public void saveQuizResult(String email, String question,
-                               String correctAnswer, String userAnswer, boolean isCorrect) {
+                               String correctAnswer, String userAnswer,
+                               boolean isCorrect) {
+        saveQuizResult(
+                email,
+                "",
+                "",
+                "",
+                "",
+                question,
+                correctAnswer,
+                userAnswer,
+                isCorrect,
+                0,
+                0
+        );
+    }
+
+    public void saveQuizResult(String email, String sessionId, String questionType,
+                               String targetLang, String wordLabelEn,
+                               String question, String correctAnswer,
+                               String userAnswer, boolean isCorrect,
+                               int pointsEarned, int maxPoints) {
         executor.execute(() -> {
             if (email == null || email.trim().isEmpty()) return;
 
             QuizResultEntity r = new QuizResultEntity();
             r.userEmail = email.trim();
+            r.sessionId = sessionId != null ? sessionId : "";
+            r.questionType = questionType != null ? questionType : "";
+            r.targetLang = targetLang != null ? targetLang : "";
+            r.wordLabelEn = wordLabelEn != null ? wordLabelEn : "";
             r.question = question != null ? question : "";
             r.correctAnswer = correctAnswer != null ? correctAnswer : "";
             r.userAnswer = userAnswer != null ? userAnswer : "";
             r.isCorrect = isCorrect;
+            r.pointsEarned = pointsEarned;
+            r.maxPoints = maxPoints;
+
             db.quizResultDao().insert(r);
         });
     }
@@ -103,12 +155,37 @@ public class AppRepository {
         return db.quizResultDao().getRecentLive(email);
     }
 
+    public LiveData<List<QuizResultEntity>> getRecentWrongQuizResultsLive(String email) {
+        return db.quizResultDao().getRecentWrongLive(email);
+    }
+
+    public LiveData<List<QuizResultEntity>> getWrongResultsBySessionLive(String sessionId) {
+        return db.quizResultDao().getWrongBySessionLive(sessionId);
+    }
+
+    public LiveData<List<QuizSessionEntity>> getRecentQuizSessionsLive(String email) {
+        return db.quizSessionDao().getRecentLive(email);
+    }
+
     public void getQuizStats(String email, Callback<int[]> cb) {
         executor.execute(() -> {
             int correct = db.quizResultDao().countCorrect(email);
             int total = db.quizResultDao().countTotal(email);
             cb.onResult(new int[]{correct, total});
         });
+    }
+    public LiveData<List<LearnedWordEntity>> getHistoryWordsLive(String email) {
+        return db.learnedWordDao().getHistoryLive(email);
+    }
+
+    public LiveData<List<LearnedWordEntity>> getFavoriteWordsLive(String email) {
+        return db.learnedWordDao().getFavoritesLive(email);
+    }
+
+    public void setFavorite(int wordId, boolean isFavorite) {
+        executor.execute(() ->
+                db.learnedWordDao().updateFavorite(wordId, isFavorite, System.currentTimeMillis())
+        );
     }
 
     public interface Callback<T> {

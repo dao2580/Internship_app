@@ -1,16 +1,9 @@
-/*
- * Copyright (c) 2025 Android project OpenVision API
- * All rights reserved.
- * Project: My Application
- * File: HistoryAdapter.java
- * Last Modified: 17/10/2025 0:56
- */
-
 package vn.edu.usth.myapplication;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,12 +11,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+import vn.edu.usth.myapplication.data.entity.LearnedWordEntity;
+
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
 
-    private final List<String[]> items; // Each item is [sourceText, translatedText]
+    public interface OnFavoriteClickListener {
+        void onFavoriteClick(LearnedWordEntity item);
+    }
 
-    public HistoryAdapter(List<String[]> items) {
+    private final List<LearnedWordEntity> items;
+    private final OnFavoriteClickListener favoriteListener;
+
+    public HistoryAdapter(List<LearnedWordEntity> items, OnFavoriteClickListener favoriteListener) {
         this.items = items;
+        this.favoriteListener = favoriteListener;
     }
 
     @NonNull
@@ -36,10 +37,27 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        String[] entry = items.get(position);
-        if (entry.length >= 2) {
-            holder.sourceText.setText(entry[0]);
-            holder.translatedText.setText(entry[1]);
+        LearnedWordEntity entry = items.get(position);
+
+        holder.sourceText.setText(entry.labelEn);
+        holder.translatedText.setText(
+                entry.translated != null && !entry.translated.isEmpty()
+                        ? entry.translated
+                        : entry.labelVi
+        );
+
+        if (holder.btnFavorite != null) {
+            holder.btnFavorite.setImageResource(
+                    entry.isFavorite
+                            ? android.R.drawable.btn_star_big_on
+                            : android.R.drawable.btn_star_big_off
+            );
+
+            holder.btnFavorite.setOnClickListener(v -> {
+                if (favoriteListener != null) {
+                    favoriteListener.onFavoriteClick(entry);
+                }
+            });
         }
     }
 
@@ -51,12 +69,13 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView sourceText;
         TextView translatedText;
+        ImageButton btnFavorite;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             sourceText = itemView.findViewById(R.id.et_source_text);
             translatedText = itemView.findViewById(R.id.et_translated_text);
+            btnFavorite = itemView.findViewById(R.id.btn_favorite_word);
         }
     }
 }
-

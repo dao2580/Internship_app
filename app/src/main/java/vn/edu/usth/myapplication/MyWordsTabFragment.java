@@ -22,6 +22,7 @@ public class MyWordsTabFragment extends Fragment {
 
     private final List<LearnedWordEntity> words = new ArrayList<>();
     private MyWordsAdapter adapter;
+    private AppRepository repository;
 
     @Nullable
     @Override
@@ -30,9 +31,11 @@ public class MyWordsTabFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_tab_my_words, container, false);
 
-        RecyclerView recycler   = v.findViewById(R.id.recycler_my_words);
-        TextView txtCount       = v.findViewById(R.id.txt_word_count);
-        TextView txtEmpty       = v.findViewById(R.id.txt_empty_words);
+        repository = new AppRepository(requireContext());
+
+        RecyclerView recycler = v.findViewById(R.id.recycler_my_words);
+        TextView txtCount = v.findViewById(R.id.txt_word_count);
+        TextView txtEmpty = v.findViewById(R.id.txt_empty_words);
 
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new MyWordsAdapter(words);
@@ -40,16 +43,16 @@ public class MyWordsTabFragment extends Fragment {
 
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
         if (email != null) {
-            new AppRepository(requireContext())
-                    .getAllWordsLive(email)
+            repository.getFavoriteWordsLive(email)
                     .observe(getViewLifecycleOwner(), list -> {
                         words.clear();
                         words.addAll(list);
                         adapter.notifyDataSetChanged();
-                        txtCount.setText("Đã học: " + list.size() + " từ");
+                        txtCount.setText("My Words: " + list.size() + "/50");
                         txtEmpty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
                     });
         }
+
         return v;
     }
 }

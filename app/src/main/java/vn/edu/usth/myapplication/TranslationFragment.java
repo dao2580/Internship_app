@@ -44,13 +44,16 @@ public class TranslationFragment extends Fragment {
     private static final String ARG_USER_INPUT_TEXT = "user_input_text";
 
     private static final String[][] LANGS = {
-            {"Arabic","ar"}, {"Chinese (Simplified)","zh-Hans"}, {"Chinese (Traditional)","zh-Hant"},
-            {"Czech","cs"}, {"Danish","da"}, {"Dutch","nl"}, {"English","en"}, {"Filipino","fil"},
-            {"Finnish","fi"}, {"French","fr"}, {"German","de"}, {"Greek","el"}, {"Hebrew","he"},
-            {"Hindi","hi"}, {"Hungarian","hu"}, {"Indonesian","id"}, {"Italian","it"},
-            {"Japanese","ja"}, {"Korean","ko"}, {"Malay","ms"}, {"Norwegian","no"},
-            {"Polish","pl"}, {"Portuguese","pt"}, {"Romanian","ro"}, {"Russian","ru"},
-            {"Spanish","es"}, {"Swedish","sv"}, {"Thai","th"}, {"Turkish","tr"}, {"Vietnamese","vi"}
+            {"Vietnamese", "vi"},
+            {"English", "en"},
+            {"Chinese", "zh"},
+            {"Japanese", "ja"},
+            {"Korean", "ko"},
+            {"French", "fr"},
+            {"German", "de"},
+            {"Spanish", "es"},
+            {"Thai", "th"},
+            {"Russian", "ru"}
     };
 
     private final Map<String, String> languageMap = new HashMap<>();
@@ -90,7 +93,6 @@ public class TranslationFragment extends Fragment {
             languageMap.put(row[0], row[1]);
             languageNames.add(row[0]);
         }
-        languageNames.sort(String::compareTo);
 
         translatorService = new AzureTranslatorService();
 

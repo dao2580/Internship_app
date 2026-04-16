@@ -1,10 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-  ~ Copyright (c) 2025 Android project OpenVision API
-  ~ All rights reserved.
-  ~ Project: My Application
-  ~ File: fragment_photo_preview.xml
-  ~ Last Modified: 17/10/2025 0:56
-  -->
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ ~ Project: My Application
+ ~ File: fragment_photo_preview.xml
+-->
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -12,89 +10,101 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- Preview Image with zoom capability -->
-    <ImageView
-        android:id="@+id/img_preview"
-        android:layout_width="match_parent"
+    <!-- Preview image + overlay -->
+    <FrameLayout
+        android:id="@+id/preview_container"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/app_name"
-        android:scaleType="fitCenter"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/detection_info_container"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Detection Info Container -->
+        <ImageView
+            android:id="@+id/img_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter" />
+
+        <vn.edu.usth.myapplication.PhotoPreviewOverlayView
+            android:id="@+id/preview_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:focusable="false" />
+    </FrameLayout>
+
+    <!-- Bottom info + actions -->
     <LinearLayout
         android:id="@+id/detection_info_container"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#CC000000"
+        android:layout_marginBottom="76dp"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:layout_marginBottom="80dp"
-        android:paddingBottom="24dp"
+        android:paddingStart="20dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="8dp"
+        android:background="@android:color/black"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Detected Objects Text -->
         <TextView
             android:id="@+id/txt_detected_objects"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
             android:gravity="center"
-            android:text="@string/analyzing_image"
+            android:text="Detected: ..."
             android:textColor="@android:color/white"
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <!-- Button Container -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_marginTop="18dp"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <!-- Back to Camera Button -->
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/btn_back_to_camera"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:contentDescription="@string/back_to_camera"
-                android:src="@drawable/ic_arrow_back"
-                app:backgroundTint="@color/surface_color"
-                app:fabSize="normal"
-                app:tint="@color/primary_text" />
+                android:contentDescription="Back"
+                app:backgroundTint="#E6DDF5"
+                app:maxImageSize="28dp"
+                app:srcCompat="@android:drawable/ic_media_previous"
+                app:tint="@android:color/black" />
 
-            <!-- Save Photo Button (visible only for temp photos) -->
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/btn_save_photo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:contentDescription="@string/save_photo"
-                android:src="@drawable/ic_save"
+                android:layout_marginStart="16dp"
+                android:contentDescription="Save Photo"
                 android:visibility="gone"
-                app:backgroundTint="@color/primary_color"
-                app:fabSize="normal"
+                app:backgroundTint="#6A00FF"
+                app:maxImageSize="24dp"
+                app:srcCompat="@android:drawable/ic_menu_save"
                 app:tint="@android:color/white" />
 
-            <!-- Proceed to Translation Button -->
             <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
                 android:id="@+id/btn_proceed_translation"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/proceed_to_translation"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:text="Proceed to Translation"
+                android:textAllCaps="false"
                 android:textColor="@android:color/white"
-                app:backgroundTint="@color/primary_color"
-                app:icon="@drawable/ic_translate" />
-
+                android:textSize="16sp"
+                app:backgroundTint="#6A00FF"
+                app:cornerRadius="18dp"
+                app:icon="@android:drawable/ic_menu_set_as"
+                app:iconTint="@android:color/white" />
         </LinearLayout>
-
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

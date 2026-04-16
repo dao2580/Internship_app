@@ -40,6 +40,7 @@ public class PhotoPreviewFragment extends Fragment {
     private static final String ARG_IS_TEMP = "is_temp";
 
     private ImageView imgPreview;
+    private PhotoPreviewOverlayView previewOverlay;
     private TextView txtDetectedObjects;
     private FloatingActionButton btnSave;
     private ExtendedFloatingActionButton btnProceedTranslation;
@@ -61,15 +62,15 @@ public class PhotoPreviewFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater,
-            @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState
-    ) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+
         View v = inflater.inflate(R.layout.fragment_photo_preview, container, false);
 
         imgPreview = v.findViewById(R.id.img_preview);
+        previewOverlay = v.findViewById(R.id.preview_overlay);
         txtDetectedObjects = v.findViewById(R.id.txt_detected_objects);
+
         FloatingActionButton btnBack = v.findViewById(R.id.btn_back_to_camera);
         btnSave = v.findViewById(R.id.btn_save_photo);
         btnProceedTranslation = v.findViewById(R.id.btn_proceed_translation);
@@ -107,15 +108,15 @@ public class PhotoPreviewFragment extends Fragment {
                 );
             } else {
                 bitmap = MediaStore.Images.Media.getBitmap(
-                        requireContext().getContentResolver(),
-                        uri
+                        requireContext().getContentResolver(), uri
                 );
             }
 
             currentBitmap = bitmap;
             imgPreview.setImageBitmap(bitmap);
+            previewOverlay.clear();
 
-            detectObjects(bitmap);
+            imgPreview.post(() -> detectObjects(bitmap));
 
         } catch (Exception e) {
             Log.e(TAG, "Failed to load image", e);
@@ -133,7 +134,6 @@ public class PhotoPreviewFragment extends Fragment {
         new Thread(() -> {
             try {
                 Bitmap processed = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-
                 List<YoloV8Classifier.Result> results =
                         YoloV8Classifier.getInstance(requireContext()).detect(processed);
 
@@ -141,6 +141,9 @@ public class PhotoPreviewFragment extends Fragment {
                 for (YoloV8Classifier.Result r : results) {
                     labels.add(r.label);
                 }
+
+                final YoloV8Classifier.Result topResult =
+                        results.isEmpty() ? null : results.get(0);
 
                 requireActivity().runOnUiThread(() -> {
                     txtDetectedObjects.setText(
@@ -150,16 +153,23 @@ public class PhotoPreviewFragment extends Fragment {
                     );
 
                     imgPreview.setImageBitmap(processed);
+
                     detectedObjectsList.clear();
                     detectedObjectsList.addAll(labels);
+
+                    if (topResult == null) {
+                        previewOverlay.clear();
+                    } else {
+                        previewOverlay.setDetection(topResult, imgPreview);
+                    }
                 });
 
             } catch (Exception e) {
                 Log.e(TAG, "detectObjects FAILED", e);
-
                 final String errorText = buildErrorMessage(e);
 
                 requireActivity().runOnUiThread(() -> {
+                    previewOverlay.clear();
                     txtDetectedObjects.setText("Detect failed: " + errorText);
                     Toast.makeText(
                             requireContext(),
@@ -187,8 +197,7 @@ public class PhotoPreviewFragment extends Fragment {
                     );
 
                     Uri imageUri = requireContext().getContentResolver().insert(
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                            values
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
                     );
 
                     if (imageUri != null) {
@@ -201,7 +210,6 @@ public class PhotoPreviewFragment extends Fragment {
                             ),
                             "CamStudy"
                     );
-
                     if (!dir.exists()) {
                         dir.mkdirs();
                     }

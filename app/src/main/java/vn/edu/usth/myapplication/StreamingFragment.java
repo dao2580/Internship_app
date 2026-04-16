@@ -10,10 +10,13 @@ import android.graphics.YuvImage;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,8 +40,13 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,32 +55,71 @@ import vn.edu.usth.myapplication.data.AppRepository;
 public class StreamingFragment extends Fragment {
 
     private static final String TAG = "StreamingFragment";
-    private static final long FRAME_INTERVAL_MS = 500;   // phân tích mỗi 500ms
-    private static final long DEBOUNCE_SAVE_MS = 3000;   // không lưu cùng 1 từ trong 3 giây
+    private static final int REQ_CAMERA = 100;
+
+    private static final long FRAME_INTERVAL_MS = 500;
+    private static final long DEBOUNCE_SAVE_MS = 3000;
+    private static final long BOX_HOLD_MS = 1500;
+
+    private static final String[][] LANGS = {
+            {"Vietnamese", "vi"},
+            {"English", "en"},
+            {"Chinese", "zh"},
+            {"Japanese", "ja"},
+            {"Korean", "ko"},
+            {"French", "fr"},
+            {"German", "de"},
+            {"Spanish", "es"},
+            {"Thai", "th"},
+            {"Russian", "ru"}
+    };
 
     private PreviewView previewView;
     private BoundingBoxOverlayView overlayView;
     private MaterialButton btnBack, btnSaveAll;
     private TextView txtStreamingHint;
+    private AutoCompleteTextView spinnerTargetLanguage;
 
     private ExecutorService cameraExecutor;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private long lastFrameTime = 0;
 
-    // Debounce: label → timestamp lần lưu gần nhất
+    private long lastFrameTime = 0L;
+    private int lastImageW = 1;
+    private int lastImageH = 1;
+
     private final Map<String, Long> lastSavedTime = new HashMap<>();
+    private final List<BoundingBoxOverlayView.DetectionItem> currentDetections = new ArrayList<>();
 
-    // Kết quả detect hiện tại để nút Save dùng
-    private List<BoundingBoxOverlayView.DetectionItem> currentDetections = new ArrayList<>();
+    private final Map<String, String> languageMap = new LinkedHashMap<>();
+    private final List<String> languageNames = new ArrayList<>();
 
-    // Repository
+    private final Map<String, TrackedDetection> trackedDetections = new LinkedHashMap<>();
+    private final Map<String, String> translationCache = new HashMap<>();
+    private final Set<String> pendingTranslationKeys = new HashSet<>();
+
     private AppRepository repository;
+    private AzureTranslatorService translatorService;
+    private OfflineTranslatorService offlineTranslatorService;
+
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
+    private boolean isOfflineModelReady = false;
+    private String currentTargetCode = "vi";
+
+    private static class TrackedDetection {
+        String id;
+        YoloV8Classifier.Result result;
+        String labelVi;
+        String translatedText;
+        long lastSeenAt;
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         View v = inflater.inflate(R.layout.fragment_streaming, container, false);
 
         previewView = v.findViewById(R.id.streaming_preview);
@@ -80,11 +127,19 @@ public class StreamingFragment extends Fragment {
         btnBack = v.findViewById(R.id.btn_streaming_back);
         btnSaveAll = v.findViewById(R.id.btn_save_detected);
         txtStreamingHint = v.findViewById(R.id.txt_streaming_hint);
+        spinnerTargetLanguage = v.findViewById(R.id.spinner_streaming_target_language);
 
         repository = new AppRepository(requireContext());
+        translatorService = new AzureTranslatorService();
+
+        setupTargetLanguageDropdown();
+        setupTts();
+
+        overlayView.setOnSpeakClickListener(this::speakDetection);
 
         btnBack.setOnClickListener(x ->
-                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment).navigateUp());
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment).navigateUp()
+        );
 
         btnSaveAll.setOnClickListener(x -> saveCurrentDetections());
 
@@ -97,11 +152,85 @@ public class StreamingFragment extends Fragment {
             ActivityCompat.requestPermissions(
                     requireActivity(),
                     new String[]{Manifest.permission.CAMERA},
-                    100
+                    REQ_CAMERA
             );
         }
 
         return v;
+    }
+
+    private void setupTargetLanguageDropdown() {
+        languageMap.clear();
+        languageNames.clear();
+
+        for (String[] row : LANGS) {
+            languageMap.put(row[0], row[1]);
+            languageNames.add(row[0]);
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                languageNames
+        );
+
+        spinnerTargetLanguage.setAdapter(adapter);
+        spinnerTargetLanguage.setText("Vietnamese", false);
+        currentTargetCode = "vi";
+        prepareOfflineTranslator(currentTargetCode);
+
+        spinnerTargetLanguage.setOnItemClickListener((parent, view, position, id) -> {
+            String name = languageNames.get(position);
+            String code = languageMap.get(name);
+            if (code == null || code.equals(currentTargetCode)) return;
+
+            currentTargetCode = code;
+            prepareOfflineTranslator(currentTargetCode);
+            setTtsLanguage(currentTargetCode);
+            refreshVisibleTranslations();
+        });
+    }
+
+    private void setupTts() {
+        tts = new TextToSpeech(requireContext(), status -> {
+            ttsReady = (status == TextToSpeech.SUCCESS);
+            if (ttsReady) {
+                setTtsLanguage(currentTargetCode);
+            }
+        });
+    }
+
+    private void prepareOfflineTranslator(String targetCode) {
+        try {
+            if (offlineTranslatorService != null) {
+                offlineTranslatorService.close();
+            }
+        } catch (Exception ignored) {
+        }
+
+        offlineTranslatorService = null;
+        isOfflineModelReady = false;
+
+        if ("vi".equals(targetCode) || "en".equals(targetCode)) {
+            isOfflineModelReady = true;
+            return;
+        }
+
+        offlineTranslatorService = new OfflineTranslatorService("en", targetCode);
+        offlineTranslatorService.downloadModel(new OfflineTranslatorService.DownloadCallback() {
+            @Override
+            public void onSuccess() {
+                mainHandler.post(() -> {
+                    isOfflineModelReady = true;
+                    refreshVisibleTranslations();
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                mainHandler.post(() -> isOfflineModelReady = false);
+            }
+        });
     }
 
     private void startCamera() {
@@ -131,9 +260,12 @@ public class StreamingFragment extends Fragment {
             } catch (Exception e) {
                 Log.e(TAG, "startCamera failed", e);
                 mainHandler.post(() ->
-                        Toast.makeText(requireContext(),
+                        Toast.makeText(
+                                requireContext(),
                                 "Không thể mở camera: " + buildErrorMessage(e),
-                                Toast.LENGTH_LONG).show());
+                                Toast.LENGTH_LONG
+                        ).show()
+                );
             }
         }, ContextCompat.getMainExecutor(requireContext()));
     }
@@ -158,61 +290,240 @@ public class StreamingFragment extends Fragment {
         try {
             results = YoloV8Classifier.getInstance(requireContext()).detectTop3(bitmap);
         } catch (Exception e) {
-            Log.e(TAG, "YOLOv8 detect failed", e);
-
+            Log.e(TAG, "YOLO detect failed", e);
             final String errorText = buildErrorMessage(e);
 
             mainHandler.post(() -> {
                 overlayView.clear();
-                currentDetections = new ArrayList<>();
+                trackedDetections.clear();
+                currentDetections.clear();
                 txtStreamingHint.setText("Detect lỗi: " + errorText);
                 btnSaveAll.setEnabled(false);
-
-                Toast.makeText(
-                        requireContext(),
-                        "YOLOv8 detect failed: " + errorText,
-                        Toast.LENGTH_LONG
-                ).show();
             });
             return;
         }
 
-        List<BoundingBoxOverlayView.DetectionItem> items = new ArrayList<>();
-        for (YoloV8Classifier.Result r : results) {
-            String vi = VocabMap.getVI(r.label);
-            items.add(new BoundingBoxOverlayView.DetectionItem(r, vi));
+        mainHandler.post(() -> updateTrackedDetections(results, imgW, imgH));
+    }
+
+    private void updateTrackedDetections(List<YoloV8Classifier.Result> results, int imgW, int imgH) {
+        lastImageW = imgW;
+        lastImageH = imgH;
+
+        long now = System.currentTimeMillis();
+        Set<String> matchedIds = new HashSet<>();
+
+        for (YoloV8Classifier.Result result : results) {
+            String existingId = findBestMatch(result, matchedIds);
+            TrackedDetection tracked;
+
+            if (existingId != null) {
+                tracked = trackedDetections.get(existingId);
+            } else {
+                tracked = new TrackedDetection();
+                tracked.id = UUID.randomUUID().toString();
+            }
+
+            tracked.result = result;
+            tracked.labelVi = VocabMap.getVI(result.label);
+            tracked.lastSeenAt = now;
+            tracked.translatedText = resolveDisplayTranslation(result.label);
+
+            trackedDetections.put(tracked.id, tracked);
+            matchedIds.add(tracked.id);
+
+            requestTranslationIfNeeded(result.label);
         }
 
-        mainHandler.post(() -> {
-            overlayView.setDetections(items, imgW, imgH);
-            currentDetections = items;
+        List<String> expiredIds = new ArrayList<>();
+        for (Map.Entry<String, TrackedDetection> entry : trackedDetections.entrySet()) {
+            if (now - entry.getValue().lastSeenAt > BOX_HOLD_MS) {
+                expiredIds.add(entry.getKey());
+            }
+        }
+        for (String id : expiredIds) {
+            trackedDetections.remove(id);
+        }
 
-            if (items.isEmpty()) {
-                txtStreamingHint.setText("Hướng camera vào vật thể...");
-                btnSaveAll.setEnabled(false);
-            } else {
-                StringBuilder sb = new StringBuilder();
-                for (BoundingBoxOverlayView.DetectionItem d : items) {
-                    sb.append(d.result.label)
-                            .append(" / ")
-                            .append(d.labelVi)
-                            .append("  ");
+        publishTrackedDetections();
+    }
+
+    @Nullable
+    private String findBestMatch(YoloV8Classifier.Result incoming, Set<String> matchedIds) {
+        float bestIou = 0f;
+        String bestId = null;
+
+        for (Map.Entry<String, TrackedDetection> entry : trackedDetections.entrySet()) {
+            if (matchedIds.contains(entry.getKey())) continue;
+
+            TrackedDetection tracked = entry.getValue();
+            if (!tracked.result.label.equals(incoming.label)) continue;
+
+            float iou = computeIou(tracked.result, incoming);
+            if (iou > bestIou) {
+                bestIou = iou;
+                bestId = entry.getKey();
+            }
+        }
+
+        return bestIou >= 0.25f ? bestId : null;
+    }
+
+    private float computeIou(YoloV8Classifier.Result a, YoloV8Classifier.Result b) {
+        float left = Math.max(a.left, b.left);
+        float top = Math.max(a.top, b.top);
+        float right = Math.min(a.right, b.right);
+        float bottom = Math.min(a.bottom, b.bottom);
+
+        float interW = Math.max(0f, right - left);
+        float interH = Math.max(0f, bottom - top);
+        float interArea = interW * interH;
+
+        float areaA = Math.max(0f, a.right - a.left) * Math.max(0f, a.bottom - a.top);
+        float areaB = Math.max(0f, b.right - b.left) * Math.max(0f, b.bottom - b.top);
+        float union = areaA + areaB - interArea;
+
+        return union <= 0f ? 0f : interArea / union;
+    }
+
+    private void publishTrackedDetections() {
+        currentDetections.clear();
+
+        for (TrackedDetection tracked : trackedDetections.values()) {
+            currentDetections.add(new BoundingBoxOverlayView.DetectionItem(
+                    tracked.id,
+                    tracked.result,
+                    tracked.labelVi,
+                    tracked.translatedText,
+                    currentTargetCode
+            ));
+        }
+
+        overlayView.setDetections(currentDetections, lastImageW, lastImageH);
+        btnSaveAll.setEnabled(!currentDetections.isEmpty());
+
+        if (currentDetections.isEmpty()) {
+            txtStreamingHint.setText("Hướng camera vào vật thể...");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (BoundingBoxOverlayView.DetectionItem item : currentDetections) {
+            if (count == 3) break;
+            if (count > 0) sb.append("   •   ");
+            sb.append(item.result.label)
+                    .append(" → ")
+                    .append(item.translatedLabel);
+            count++;
+        }
+        txtStreamingHint.setText(sb.toString());
+    }
+
+    private String resolveDisplayTranslation(String labelEn) {
+        if ("en".equals(currentTargetCode)) {
+            return labelEn;
+        }
+        if ("vi".equals(currentTargetCode)) {
+            return VocabMap.getVI(labelEn);
+        }
+
+        String key = buildTranslationKey(labelEn, currentTargetCode);
+        String cached = translationCache.get(key);
+        if (cached != null && !cached.trim().isEmpty()) {
+            return cached;
+        }
+
+        return VocabMap.getVI(labelEn);
+    }
+
+    private void requestTranslationIfNeeded(String labelEn) {
+        if ("vi".equals(currentTargetCode) || "en".equals(currentTargetCode)) {
+            return;
+        }
+
+        String targetCode = currentTargetCode;
+        String cacheKey = buildTranslationKey(labelEn, targetCode);
+
+        if (translationCache.containsKey(cacheKey) || pendingTranslationKeys.contains(cacheKey)) {
+            return;
+        }
+
+        pendingTranslationKeys.add(cacheKey);
+
+        if (NetworkUtils.isInternetAvailable(requireContext())) {
+            translatorService.translate(labelEn, targetCode, new AzureTranslatorService.TranslationCallback() {
+                @Override
+                public void onSuccess(String translatedText) {
+                    mainHandler.post(() -> {
+                        pendingTranslationKeys.remove(cacheKey);
+                        translationCache.put(cacheKey, translatedText);
+                        applyTranslatedValue(labelEn, targetCode, translatedText);
+                    });
                 }
-                txtStreamingHint.setText(sb.toString().trim());
-                btnSaveAll.setEnabled(true);
+
+                @Override
+                public void onError(String error) {
+                    translateOfflineLabel(labelEn, targetCode, cacheKey);
+                }
+            });
+        } else {
+            translateOfflineLabel(labelEn, targetCode, cacheKey);
+        }
+    }
+
+    private void translateOfflineLabel(String labelEn, String targetCode, String cacheKey) {
+        if (offlineTranslatorService == null || !isOfflineModelReady) {
+            mainHandler.post(() -> pendingTranslationKeys.remove(cacheKey));
+            return;
+        }
+
+        offlineTranslatorService.translate(labelEn, new OfflineTranslatorService.TranslationCallback() {
+            @Override
+            public void onSuccess(String translatedText) {
+                mainHandler.post(() -> {
+                    pendingTranslationKeys.remove(cacheKey);
+                    translationCache.put(cacheKey, translatedText);
+                    applyTranslatedValue(labelEn, targetCode, translatedText);
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                mainHandler.post(() -> pendingTranslationKeys.remove(cacheKey));
             }
         });
     }
 
-    /**
-     * Lưu tất cả detection hiện tại vào Room (có debounce — không lưu trùng trong 3 giây)
-     */
+    private void applyTranslatedValue(String labelEn, String targetCode, String translatedText) {
+        if (!targetCode.equals(currentTargetCode)) return;
+
+        for (TrackedDetection tracked : trackedDetections.values()) {
+            if (tracked.result.label.equalsIgnoreCase(labelEn)) {
+                tracked.translatedText = translatedText;
+            }
+        }
+        publishTrackedDetections();
+    }
+
+    private void refreshVisibleTranslations() {
+        for (TrackedDetection tracked : trackedDetections.values()) {
+            tracked.translatedText = resolveDisplayTranslation(tracked.result.label);
+            requestTranslationIfNeeded(tracked.result.label);
+        }
+        publishTrackedDetections();
+    }
+
+    private String buildTranslationKey(String labelEn, String targetCode) {
+        return targetCode + "|" + labelEn.trim().toLowerCase(Locale.US);
+    }
+
     private void saveCurrentDetections() {
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
         if (email == null) return;
 
         if (currentDetections.isEmpty()) {
-            Toast.makeText(requireContext(), "Chưa detect được vật thể nào", Toast.LENGTH_SHORT).show();
+            toast("Chưa detect được vật thể nào");
             return;
         }
 
@@ -223,31 +534,72 @@ public class StreamingFragment extends Fragment {
             String label = item.result.label;
             Long lastTime = lastSavedTime.get(label);
 
-            // Debounce: bỏ qua nếu đã lưu từ này trong 3 giây qua
-            if (lastTime != null && now - lastTime < DEBOUNCE_SAVE_MS) continue;
+            if (lastTime != null && now - lastTime < DEBOUNCE_SAVE_MS) {
+                continue;
+            }
 
             lastSavedTime.put(label, now);
+
             repository.saveLearnedWord(
                     email,
                     label,
                     item.labelVi,
-                    item.labelVi,
-                    "vi",
+                    item.translatedLabel,
+                    currentTargetCode,
                     "streaming"
             );
             savedCount++;
         }
 
         if (savedCount > 0) {
-            Toast.makeText(requireContext(),
-                    "Đã lưu " + savedCount + " từ vào My Words!", Toast.LENGTH_SHORT).show();
+            toast("Đã lưu " + savedCount + " từ vào My Words!");
         } else {
-            Toast.makeText(requireContext(),
-                    "Các từ này đã được lưu gần đây", Toast.LENGTH_SHORT).show();
+            toast("Các từ này đã được lưu gần đây");
         }
     }
 
-    // ===== Convert ImageProxy → Bitmap =====
+    private void speakDetection(BoundingBoxOverlayView.DetectionItem item) {
+        String text = item.translatedLabel;
+        if (text == null || text.trim().isEmpty()) {
+            text = item.labelVi;
+        }
+        speak(text, item.targetLangCode);
+    }
+
+    private void speak(String text, String langCode) {
+        if (!ttsReady || tts == null) {
+            toast("Text-to-Speech unavailable");
+            return;
+        }
+
+        if (text == null || text.trim().isEmpty()) {
+            toast("Không có nội dung để phát âm");
+            return;
+        }
+
+        setTtsLanguage(langCode);
+        tts.stop();
+        tts.setSpeechRate(1.0f);
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "STREAMING_TTS");
+    }
+
+    private int setTtsLanguage(String code) {
+        if (!ttsReady || tts == null) return TextToSpeech.ERROR;
+
+        try {
+            Locale locale = Locale.forLanguageTag(code);
+            int result = tts.setLanguage(locale);
+
+            if (result == TextToSpeech.LANG_MISSING_DATA
+                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                result = tts.setLanguage(Locale.US);
+            }
+            return result;
+        } catch (Exception e) {
+            return TextToSpeech.ERROR;
+        }
+    }
+
     private Bitmap toBitmap(ImageProxy image) {
         try {
             ImageProxy.PlaneProxy[] planes = image.getPlanes();
@@ -281,7 +633,6 @@ public class StreamingFragment extends Fragment {
 
             byte[] bytes = out.toByteArray();
             return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
         } catch (Exception e) {
             Log.e(TAG, "toBitmap failed", e);
             return null;
@@ -296,10 +647,53 @@ public class StreamingFragment extends Fragment {
         return e.getClass().getSimpleName() + ": " + msg;
     }
 
+    private void toast(String s) {
+        if (isAdded() && getContext() != null) {
+            Toast.makeText(getContext(), s, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQ_CAMERA) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCamera();
+            } else {
+                toast("Bạn cần cấp quyền camera để dùng chế độ streaming");
+            }
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (cameraExecutor != null) cameraExecutor.shutdown();
+
+        if (cameraExecutor != null) {
+            cameraExecutor.shutdown();
+        }
+
+        if (offlineTranslatorService != null) {
+            try {
+                offlineTranslatorService.close();
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (tts != null) {
+            try {
+                tts.stop();
+                tts.shutdown();
+            } catch (Exception ignored) {
+            }
+        }
+
         overlayView.clear();
+        trackedDetections.clear();
+        currentDetections.clear();
     }
 }
