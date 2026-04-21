@@ -174,6 +174,7 @@ public class AppRepository {
             cb.onResult(new int[]{correct, total});
         });
     }
+
     public LiveData<List<LearnedWordEntity>> getHistoryWordsLive(String email) {
         return db.learnedWordDao().getHistoryLive(email);
     }
@@ -190,5 +191,30 @@ public class AppRepository {
 
     public interface Callback<T> {
         void onResult(T result);
+    }
+
+    public void clearHistory(String email) {
+        executor.execute(() -> {
+            if (email == null || email.trim().isEmpty()) return;
+
+            String safeEmail = email.trim();
+            db.learnedWordDao().deleteAllByEmail(safeEmail);
+            db.quizResultDao().deleteAllByEmail(safeEmail);
+            db.quizSessionDao().deleteAllByEmail(safeEmail);
+        });
+    }
+
+    public void migrateUserEmail(String oldEmail, String newEmail) {
+        executor.execute(() -> {
+            if (oldEmail == null || oldEmail.trim().isEmpty()) return;
+            if (newEmail == null || newEmail.trim().isEmpty()) return;
+
+            String safeOldEmail = oldEmail.trim();
+            String safeNewEmail = newEmail.trim();
+
+            db.learnedWordDao().migrateUserEmail(safeOldEmail, safeNewEmail);
+            db.quizResultDao().migrateUserEmail(safeOldEmail, safeNewEmail);
+            db.quizSessionDao().migrateUserEmail(safeOldEmail, safeNewEmail);
+        });
     }
 }

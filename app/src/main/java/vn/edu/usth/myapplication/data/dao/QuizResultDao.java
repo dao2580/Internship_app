@@ -37,4 +37,10 @@ public interface QuizResultDao {
     @Query("SELECT COUNT(*) FROM quiz_results " +
             "WHERE LOWER(userEmail) = LOWER(:email)")
     int countTotal(String email);
+
+    @Query("DELETE FROM quiz_results WHERE LOWER(userEmail) = LOWER(:email)")
+    void deleteAllByEmail(String email);
+
+    @Query("UPDATE quiz_results SET userEmail = :newEmail WHERE LOWER(userEmail) = LOWER(:oldEmail)")
+    void migrateUserEmail(String oldEmail, String newEmail);
 }

@@ -159,6 +159,15 @@ public class StreamingFragment extends Fragment {
         return v;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (spinnerTargetLanguage != null) {
+            applyDefaultTargetLanguage(true);
+        }
+    }
+
     private void setupTargetLanguageDropdown() {
         languageMap.clear();
         languageNames.clear();
@@ -175,9 +184,9 @@ public class StreamingFragment extends Fragment {
         );
 
         spinnerTargetLanguage.setAdapter(adapter);
-        spinnerTargetLanguage.setText("Vietnamese", false);
-        currentTargetCode = "vi";
-        prepareOfflineTranslator(currentTargetCode);
+
+        // Lấy default target language từ SettingsPreferences
+        applyDefaultTargetLanguage(false);
 
         spinnerTargetLanguage.setOnItemClickListener((parent, view, position, id) -> {
             String name = languageNames.get(position);
@@ -189,6 +198,22 @@ public class StreamingFragment extends Fragment {
             setTtsLanguage(currentTargetCode);
             refreshVisibleTranslations();
         });
+    }
+
+    private void applyDefaultTargetLanguage(boolean refreshTranslations) {
+        String defaultCode = SettingsPreferences.getDefaultLanguageCode(requireContext());
+        String defaultName = SettingsPreferences.getLanguageNameFromCode(defaultCode);
+
+        boolean changed = !defaultCode.equals(currentTargetCode);
+        currentTargetCode = defaultCode;
+
+        spinnerTargetLanguage.setText(defaultName, false);
+        prepareOfflineTranslator(currentTargetCode);
+        setTtsLanguage(currentTargetCode);
+
+        if (refreshTranslations && changed) {
+            refreshVisibleTranslations();
+        }
     }
 
     private void setupTts() {

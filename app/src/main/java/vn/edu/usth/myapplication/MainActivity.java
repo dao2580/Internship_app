@@ -52,8 +52,8 @@ public class MainActivity extends AppCompatActivity {
             // Hide bottom navigation on Welcome, Login and Register screens
             navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
                 int id = destination.getId();
-                if (id == R.id.nav_welcome || id == R.id.nav_login || id == R.id.nav_register ||
-                        id == R.id.nav_photo_preview || id == R.id.nav_translation || id == R.id.nav_streaming || id == R.id.nav_streaming) {
+                if (id == R.id.nav_welcome || id == R.id.nav_login || id == R.id.nav_register || id == R.id.nav_forgot_password ||
+                        id == R.id.nav_photo_preview || id == R.id.nav_translation || id == R.id.nav_streaming) {
                     bottomNavigationView.setVisibility(View.GONE);
                 } else {
                     bottomNavigationView.setVisibility(View.VISIBLE);

@@ -22,16 +22,21 @@ import java.util.Collections;
 import java.util.List;
 
 public final class YoloV8Classifier {
-
     private static final String TAG = "Yolo26";
     private static final String LABEL_FILE = "labels.txt";
 
-    // Ưu tiên float32 để test trước
+    // Ưu tiên model mới của bạn trước
     private static final String[] MODEL_CANDIDATES = {
+            "best_float32.tflite",
+            "best_float16.tflite",
+            "best.tflite",
             "yolo26n_float32.tflite",
             "yolo26n_float16.tflite",
             "yolo26n.tflite"
     };
+
+    private static final int EXPECTED_LABEL_COUNT = 45;
+    private static final float SCORE_THRESHOLD = 0.25f;
 
     private enum OutputMode {
         END2END_HWC, // [1, N, 6]
@@ -42,20 +47,22 @@ public final class YoloV8Classifier {
 
     private final Interpreter interpreter;
     private final String modelFileUsed;
-
     private final int inputWidth;
     private final int inputHeight;
     private final int outDim1;
     private final int outDim2;
     private final OutputMode outputMode;
-
-    private final float scoreThreshold = 0.25f;
-
     private final List<String> labels = new ArrayList<>();
 
     private YoloV8Classifier(Context context) {
         try {
             loadLabels(context, LABEL_FILE);
+
+            if (labels.size() != EXPECTED_LABEL_COUNT) {
+                throw new IllegalStateException(
+                        "labels.txt phai co " + EXPECTED_LABEL_COUNT + " dong, hien tai = " + labels.size()
+                );
+            }
 
             modelFileUsed = chooseModelFile(context);
 
@@ -94,16 +101,13 @@ public final class YoloV8Classifier {
 
             Log.d(TAG, "Loaded model: " + modelFileUsed);
             Log.d(TAG, "labels size = " + labels.size());
-            Log.d(TAG, "input tensor count = " + interpreter.getInputTensorCount());
-            Log.d(TAG, "output tensor count = " + interpreter.getOutputTensorCount());
             Log.d(TAG, "input shape = " + Arrays.toString(inputShape));
             Log.d(TAG, "input type = " + inputType);
             Log.d(TAG, "output[0] shape = " + Arrays.toString(outputShape));
-            Log.d(TAG, "output[0] type = " + interpreter.getOutputTensor(0).dataType());
             Log.d(TAG, "output mode = " + outputMode);
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load YOLO26 model", e);
+            throw new RuntimeException("Failed to load YOLO model", e);
         }
     }
 
@@ -119,7 +123,7 @@ public final class YoloV8Classifier {
     }
 
     public List<Result> detect(Bitmap bitmap) {
-        return runDetection(bitmap, 1);
+        return runDetection(bitmap, 10);
     }
 
     public List<Result> detectTop3(Bitmap bitmap) {
@@ -134,13 +138,6 @@ public final class YoloV8Classifier {
 
         float[][][] output = new float[1][outDim1][outDim2];
 
-        Log.d(TAG, "before run: model=" + modelFileUsed
-                + ", inputWidth=" + inputWidth
-                + ", inputHeight=" + inputHeight
-                + ", outDim1=" + outDim1
-                + ", outDim2=" + outDim2
-                + ", outputMode=" + outputMode);
-
         interpreter.run(input, output);
 
         return postprocess(output, bitmap.getWidth(), bitmap.getHeight(), maxResults);
@@ -151,7 +148,7 @@ public final class YoloV8Classifier {
         if (d1 == 6) return OutputMode.END2END_CHW; // [1, 6, N]
 
         throw new IllegalStateException(
-                "Unsupported YOLO26 output shape: [1, " + d1 + ", " + d2 + "]. Expected [1, N, 6] or [1, 6, N]."
+                "Unsupported output shape: [1, " + d1 + ", " + d2 + "]. Expected [1, N, 6] or [1, 6, N]."
         );
     }
 
@@ -177,14 +174,12 @@ public final class YoloV8Classifier {
 
         if (outputMode == OutputMode.END2END_HWC) {
             int numBoxes = outDim1;
-
             for (int i = 0; i < numBoxes; i++) {
                 float[] row = output[0][i];
                 addEnd2EndResult(results, row[0], row[1], row[2], row[3], row[4], row[5], origW, origH);
             }
         } else {
             int numBoxes = outDim2;
-
             for (int i = 0; i < numBoxes; i++) {
                 float left = output[0][0][i];
                 float top = output[0][1][i];
@@ -215,7 +210,7 @@ public final class YoloV8Classifier {
             int origW,
             int origH
     ) {
-        if (score < scoreThreshold) return;
+        if (score < SCORE_THRESHOLD) return;
 
         int classId = Math.round(classValue);
         if (classId < 0 || classId >= labels.size()) return;
@@ -231,7 +226,6 @@ public final class YoloV8Classifier {
     }
 
     private float toImageX(float x, int origW) {
-        // hỗ trợ cả normalized [0..1] và scale theo input
         if (x >= 0f && x <= 1.5f) return x * origW;
         return (x / inputWidth) * origW;
     }
@@ -251,10 +245,7 @@ public final class YoloV8Classifier {
                 return candidate;
             }
         }
-
-        throw new IOException(
-                "No YOLO26 model found in assets. Expected one of: " + Arrays.toString(MODEL_CANDIDATES)
-        );
+        throw new IOException("No YOLO model found in assets. Expected one of: " + Arrays.toString(MODEL_CANDIDATES));
     }
 
     private boolean assetExists(Context context, String assetName) {
@@ -291,7 +282,9 @@ public final class YoloV8Classifier {
             String line;
             while ((line = r.readLine()) != null) {
                 line = line.trim();
-                if (!line.isEmpty()) labels.add(line);
+                if (!line.isEmpty()) {
+                    labels.add(line);
+                }
             }
         }
     }

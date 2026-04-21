@@ -1,246 +1,216 @@
-/*
- * Copyright (c) 2025 Android project OpenVision API
- * All rights reserved.
- * Project: My Application
- * File: UserDatabase.java
- * Last Modified: 17/10/2025 0:56
- */
-
 package vn.edu.usth.myapplication;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-public class UserDatabase extends SQLiteOpenHelper {
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import vn.edu.usth.myapplication.data.AppDatabase;
+import vn.edu.usth.myapplication.data.entity.UserEntity;
+import vn.edu.usth.myapplication.data.entity.UserSessionEntity;
+
+public class UserDatabase {
+
     private static final String TAG = "UserDatabase";
-    private static final String DATABASE_NAME = "CamStudyUsers.db";
-    private static final int DATABASE_VERSION = 2; // Increased version for database refresh
 
-    // Users table
-    private static final String TABLE_USERS = "users";
-    private static final String COLUMN_ID = "id";
-    private static final String COLUMN_EMAIL = "email";
-    private static final String COLUMN_PASSWORD = "password";
-    private static final String COLUMN_CREATED_AT = "created_at";
-
-    // Session table
-    private static final String TABLE_SESSION = "user_session";
-    private static final String COLUMN_SESSION_EMAIL = "email";
-    private static final String COLUMN_IS_LOGGED_IN = "is_logged_in";
+    private final AppDatabase db;
+    private final ExecutorService executor;
 
     public UserDatabase(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        db = AppDatabase.getInstance(context);
+        executor = Executors.newSingleThreadExecutor();
     }
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
+    private <T> T runBlocking(Callable<T> task, T fallbackValue) {
+        Future<T> future = executor.submit(task);
         try {
-            // Create users table
-            String createUsersTable = "CREATE TABLE " + TABLE_USERS + " (" +
-                    COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    COLUMN_EMAIL + " TEXT UNIQUE NOT NULL COLLATE NOCASE, " +
-                    COLUMN_PASSWORD + " TEXT NOT NULL, " +
-                    COLUMN_CREATED_AT + " INTEGER DEFAULT (strftime('%s', 'now')))";
-            db.execSQL(createUsersTable);
-            Log.d(TAG, "Users table created successfully");
-
-            // Create session table
-            String createSessionTable = "CREATE TABLE " + TABLE_SESSION + " (" +
-                    COLUMN_SESSION_EMAIL + " TEXT PRIMARY KEY COLLATE NOCASE, " +
-                    COLUMN_IS_LOGGED_IN + " INTEGER DEFAULT 0)";
-            db.execSQL(createSessionTable);
-            Log.d(TAG, "Session table created successfully");
-        } catch (Exception e) {
-            Log.e(TAG, "Error creating tables", e);
+            return future.get();
+        } catch (ExecutionException | InterruptedException e) {
+            Log.e(TAG, "Database operation failed", e);
+            return fallbackValue;
         }
     }
 
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    private void runBlockingVoid(Runnable task) {
+        Future<?> future = executor.submit(task);
         try {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_SESSION);
-            onCreate(db);
-            Log.d(TAG, "Database upgraded from version " + oldVersion + " to " + newVersion);
-        } catch (Exception e) {
-            Log.e(TAG, "Error upgrading database", e);
+            future.get();
+        } catch (ExecutionException | InterruptedException e) {
+            Log.e(TAG, "Database operation failed", e);
         }
     }
 
-    // Check if email exists (case-insensitive)
     public boolean checkEmailExists(String email) {
         if (email == null || email.trim().isEmpty()) {
             return false;
         }
 
-        SQLiteDatabase db = null;
-        Cursor cursor = null;
-        try {
-            db = this.getReadableDatabase();
-            cursor = db.query(TABLE_USERS,
-                    new String[]{COLUMN_EMAIL},
-                    "LOWER(" + COLUMN_EMAIL + ") = LOWER(?)",
-                    new String[]{email.trim()},
-                    null, null, null);
-            boolean exists = cursor.getCount() > 0;
-            Log.d(TAG, "Email exists check for '" + email + "': " + exists);
-            return exists;
-        } catch (Exception e) {
-            Log.e(TAG, "Error checking email exists", e);
-            return false;
-        } finally {
-            if (cursor != null) cursor.close();
-        }
+        String safeEmail = email.trim();
+
+        return runBlocking(
+                () -> db.userDao().countByEmail(safeEmail) > 0,
+                false
+        );
     }
 
-    // Register new user
     public boolean registerUser(String email, String password) {
         if (email == null || email.trim().isEmpty() || password == null || password.isEmpty()) {
             Log.e(TAG, "Invalid email or password");
             return false;
         }
 
-        email = email.trim();
+        String safeEmail = email.trim();
 
-        if (checkEmailExists(email)) {
-            Log.d(TAG, "Email already exists: " + email);
-            return false;
-        }
+        return runBlocking(() -> {
+            if (db.userDao().countByEmail(safeEmail) > 0) {
+                return false;
+            }
 
-        SQLiteDatabase db = null;
-        try {
-            db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_EMAIL, email);
-            values.put(COLUMN_PASSWORD, password);
+            UserEntity user = new UserEntity();
+            user.email = safeEmail;
+            user.password = password;
 
-            long result = db.insert(TABLE_USERS, null, values);
-            boolean success = result != -1;
-            Log.d(TAG, "User registration for '" + email + "': " + (success ? "SUCCESS" : "FAILED"));
-            return success;
-        } catch (Exception e) {
-            Log.e(TAG, "Error registering user", e);
-            return false;
-        }
+            long result = db.userDao().insert(user);
+            return result != -1;
+        }, false);
     }
 
-    // Validate login credentials (case-insensitive email)
     public boolean validateLogin(String email, String password) {
         if (email == null || email.trim().isEmpty() || password == null) {
-            Log.d(TAG, "Invalid login credentials provided");
             return false;
         }
 
-        email = email.trim();
-        SQLiteDatabase db = null;
-        Cursor cursor = null;
-        try {
-            db = this.getReadableDatabase();
-            cursor = db.query(TABLE_USERS,
-                    new String[]{COLUMN_EMAIL, COLUMN_PASSWORD},
-                    "LOWER(" + COLUMN_EMAIL + ") = LOWER(?) AND " + COLUMN_PASSWORD + " = ?",
-                    new String[]{email, password},
-                    null, null, null);
-            boolean valid = cursor.getCount() > 0;
-            Log.d(TAG, "Login validation for '" + email + "': " + (valid ? "SUCCESS" : "FAILED"));
-            return valid;
-        } catch (Exception e) {
-            Log.e(TAG, "Error validating login", e);
-            return false;
-        } finally {
-            if (cursor != null) cursor.close();
-        }
+        String safeEmail = email.trim();
+
+        return runBlocking(() -> {
+            UserEntity user = db.userDao().findByEmail(safeEmail);
+            return user != null && password.equals(user.password);
+        }, false);
     }
 
-    // Check if email exists but password is wrong (case-insensitive)
     public boolean isEmailRegistered(String email) {
         return checkEmailExists(email);
     }
 
-    // Save login session
     public void saveLoginSession(String email, boolean isLoggedIn) {
+        if (!isLoggedIn) {
+            logout();
+            return;
+        }
+
         if (email == null || email.trim().isEmpty()) {
             Log.e(TAG, "Cannot save session with empty email");
             return;
         }
 
-        email = email.trim();
-        SQLiteDatabase db = null;
-        try {
-            db = this.getWritableDatabase();
+        String safeEmail = email.trim();
 
-            // Clear previous sessions
-            db.delete(TABLE_SESSION, null, null);
+        runBlockingVoid(() -> {
+            db.userSessionDao().clearAll();
 
-            // Insert new session
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_SESSION_EMAIL, email);
-            values.put(COLUMN_IS_LOGGED_IN, isLoggedIn ? 1 : 0);
-            long result = db.insert(TABLE_SESSION, null, values);
-            Log.d(TAG, "Session saved for '" + email + "': " + (result != -1 ? "SUCCESS" : "FAILED"));
-        } catch (Exception e) {
-            Log.e(TAG, "Error saving login session", e);
-        }
+            UserSessionEntity session = new UserSessionEntity();
+            session.sessionId = 1;
+            session.email = safeEmail;
+            session.isLoggedIn = true;
+
+            db.userSessionDao().insert(session);
+        });
     }
 
-    // Get current session
     public String getLoggedInEmail() {
-        SQLiteDatabase db = null;
-        Cursor cursor = null;
-        try {
-            db = this.getReadableDatabase();
-            cursor = db.query(TABLE_SESSION,
-                    new String[]{COLUMN_SESSION_EMAIL},
-                    COLUMN_IS_LOGGED_IN + " = ?",
-                    new String[]{"1"},
-                    null, null, null);
-
-            if (cursor.moveToFirst()) {
-                String email = cursor.getString(0);
-                Log.d(TAG, "Logged in email: " + email);
-                return email;
+        return runBlocking(() -> {
+            UserSessionEntity session = db.userSessionDao().getCurrentSession();
+            if (session != null && session.isLoggedIn && session.email != null && !session.email.trim().isEmpty()) {
+                return session.email;
             }
-            Log.d(TAG, "No logged in user found");
             return null;
-        } catch (Exception e) {
-            Log.e(TAG, "Error getting logged in email", e);
-            return null;
-        } finally {
-            if (cursor != null) cursor.close();
-        }
+        }, null);
     }
 
-    // Check if user is logged in
     public boolean isLoggedIn() {
         return getLoggedInEmail() != null;
     }
 
-    // Logout user
     public void logout() {
-        SQLiteDatabase db = null;
-        try {
-            db = this.getWritableDatabase();
-            int deleted = db.delete(TABLE_SESSION, null, null);
-            Log.d(TAG, "Logout: " + deleted + " session(s) cleared");
-        } catch (Exception e) {
-            Log.e(TAG, "Error during logout", e);
-        }
+        runBlockingVoid(() -> db.userSessionDao().clearAll());
     }
 
-    // Clear all data (for testing)
     public void clearAllData() {
-        SQLiteDatabase db = null;
-        try {
-            db = this.getWritableDatabase();
-            db.delete(TABLE_USERS, null, null);
-            db.delete(TABLE_SESSION, null, null);
-            Log.d(TAG, "All data cleared");
-        } catch (Exception e) {
-            Log.e(TAG, "Error clearing all data", e);
+        runBlockingVoid(() -> {
+            db.userSessionDao().clearAll();
+            db.userDao().deleteAll();
+        });
+    }
+
+    public String getPasswordByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
         }
+
+        String safeEmail = email.trim();
+
+        return runBlocking(() -> {
+            UserEntity user = db.userDao().findByEmail(safeEmail);
+            return user != null ? user.password : null;
+        }, null);
+    }
+
+    public String getCurrentPassword() {
+        String email = getLoggedInEmail();
+        if (email == null) return null;
+        return getPasswordByEmail(email);
+    }
+
+    public boolean updatePassword(String email, String currentPassword, String newPassword) {
+        if (email == null || email.trim().isEmpty()) return false;
+        if (currentPassword == null || currentPassword.isEmpty()) return false;
+        if (newPassword == null || newPassword.isEmpty()) return false;
+
+        String safeEmail = email.trim();
+
+        return runBlocking(() -> {
+            UserEntity user = db.userDao().findByEmail(safeEmail);
+            if (user == null) return false;
+            if (!currentPassword.equals(user.password)) return false;
+
+            int updated = db.userDao().updatePassword(safeEmail, newPassword);
+            return updated > 0;
+        }, false);
+    }
+
+    public boolean updateEmail(String currentEmail, String password, String newEmail) {
+        if (currentEmail == null || currentEmail.trim().isEmpty()) return false;
+        if (password == null || password.isEmpty()) return false;
+        if (newEmail == null || newEmail.trim().isEmpty()) return false;
+
+        String safeCurrentEmail = currentEmail.trim();
+        String safeNewEmail = newEmail.trim();
+
+        return runBlocking(() -> {
+            UserEntity currentUser = db.userDao().findByEmail(safeCurrentEmail);
+            if (currentUser == null) return false;
+            if (!password.equals(currentUser.password)) return false;
+
+            UserEntity newEmailUser = db.userDao().findByEmail(safeNewEmail);
+            if (newEmailUser != null && !safeCurrentEmail.equalsIgnoreCase(safeNewEmail)) {
+                return false;
+            }
+
+            final boolean[] success = {false};
+
+            db.runInTransaction(() -> {
+                int updatedUsers = db.userDao().updateEmail(safeCurrentEmail, safeNewEmail);
+                if (updatedUsers > 0) {
+                    db.userSessionDao().updateSessionEmail(safeCurrentEmail, safeNewEmail);
+                    success[0] = true;
+                }
+            });
+
+            return success[0];
+        }, false);
     }
 }

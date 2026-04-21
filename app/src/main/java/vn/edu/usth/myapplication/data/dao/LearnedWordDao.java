@@ -76,4 +76,11 @@ public interface LearnedWordDao {
             "SET isFavorite = :isFavorite, lastSeenAt = :now " +
             "WHERE id = :id")
     void updateFavorite(int id, boolean isFavorite, long now);
+
+    @Query("DELETE FROM learned_words WHERE LOWER(userEmail) = LOWER(:email)")
+    void deleteAllByEmail(String email);
+
+    @Query("UPDATE learned_words SET userEmail = :newEmail WHERE LOWER(userEmail) = LOWER(:oldEmail)")
+    void migrateUserEmail(String oldEmail, String newEmail);
+
 }

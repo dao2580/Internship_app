@@ -66,6 +66,23 @@
         android:name="vn.edu.usth.myapplication.SettingsFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_settings" />
+    <fragment
+        android:id="@+id/nav_settings_profile"
+        android:name="vn.edu.usth.myapplication.SettingsProfileFragment"
+        android:label="Update Profile"
+        tools:layout="@layout/fragment_settings_profile" />
+
+    <fragment
+        android:id="@+id/nav_settings_privacy"
+        android:name="vn.edu.usth.myapplication.SettingsPrivacyFragment"
+        android:label="Manage Privacy"
+        tools:layout="@layout/fragment_settings_privacy" />
+
+    <fragment
+        android:id="@+id/nav_settings_user_preferences"
+        android:name="vn.edu.usth.myapplication.SettingsUserPreferencesFragment"
+        android:label="Manage User Preferences"
+        tools:layout="@layout/fragment_settings_user_preferences" />
 
     <fragment
         android:id="@+id/nav_photo_preview"
@@ -112,5 +129,11 @@
         android:name="vn.edu.usth.myapplication.StreamingFragment"
         android:label="Streaming"
         tools:layout="@layout/fragment_streaming" />
+
+    <fragment
+        android:id="@+id/nav_forgot_password"
+        android:name="vn.edu.usth.myapplication.ForgotPasswordFragment"
+        android:label="Forgot Password"
+        tools:layout="@layout/fragment_forgot_password" />
 
 </navigation>

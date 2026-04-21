@@ -228,9 +228,12 @@ public class TranslationFragment extends Fragment {
         );
 
         spinnerTargetLanguage.setAdapter(adapter);
-        spinnerTargetLanguage.setText("Vietnamese", false);
-        currentTargetCode = "vi";
 
+        String defaultCode = SettingsPreferences.getDefaultLanguageCode(requireContext());
+        String defaultName = SettingsPreferences.getLanguageNameFromCode(defaultCode);
+
+        spinnerTargetLanguage.setText(defaultName, false);
+        currentTargetCode = defaultCode;
         prepareOfflineTranslator(currentTargetCode);
 
         spinnerTargetLanguage.setOnItemClickListener((parent, view, position, id) -> {

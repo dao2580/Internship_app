@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <EditText
+        android:id="@+id/edt_password_for_email_change"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_settings_card"
+        android:hint="Current password"
+        android:inputType="textPassword"
+        android:minHeight="52dp"
+        android:padding="14dp" />
+
+    <EditText
+        android:id="@+id/edt_new_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_settings_card"
+        android:hint="New email"
+        android:inputType="textEmailAddress"
+        android:minHeight="52dp"
+        android:padding="14dp" />
+
+</LinearLayout>

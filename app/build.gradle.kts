@@ -23,30 +23,31 @@ android {
         targetSdk = 36
         versionCode = 5
         versionName = "1.5"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Read Azure API keys from local.properties
         val properties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
             properties.load(FileInputStream(localPropertiesFile))
         }
+
         buildFeatures {
             buildConfig = true
             viewBinding = true
         }
+
         buildConfigField(
-            "String",
-            "AZURE_TRANSLATOR_KEY",
-            "\"${properties.getProperty("AZURE_TRANSLATOR_KEY", "")}\""
+            "String", "AZURE_TRANSLATOR_KEY", "\"${properties.getProperty("AZURE_TRANSLATOR_KEY", "")}\""
         )
         buildConfigField(
-            "String",
-            "AZURE_TRANSLATOR_REGION",
-            "\"${properties.getProperty("AZURE_TRANSLATOR_REGION", "")}\""
+            "String", "AZURE_TRANSLATOR_REGION", "\"${properties.getProperty("AZURE_TRANSLATOR_REGION", "")}\""
         )
     }
+
+    androidResources {
+        noCompress += "tflite"
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -56,6 +57,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

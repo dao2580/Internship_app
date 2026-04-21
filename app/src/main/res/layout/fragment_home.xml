@@ -148,7 +148,7 @@
                         android:layout_height="wrap_content"
                         android:alpha="0.8"
                         android:gravity="center"
-                        android:text="Chụp &amp; nhận diện"
+                        android:text="Take a photo &amp; Detect"
                         android:textColor="@android:color/white"
                         android:textSize="12sp" />
 
