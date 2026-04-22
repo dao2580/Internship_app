@@ -1,2 +1,2 @@
 # Internship_app
-Mobile App;ication for Learning Vocabulary Using Object Detection
+Mobile Application for Learning Vocabulary Using Object Detection
