@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.os.Bundle;
@@ -39,6 +40,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -57,9 +59,19 @@ public class StreamingFragment extends Fragment {
     private static final String TAG = "StreamingFragment";
     private static final int REQ_CAMERA = 100;
 
-    private static final long FRAME_INTERVAL_MS = 500;
+    private static final long FRAME_INTERVAL_MS = 200;
     private static final long DEBOUNCE_SAVE_MS = 3000;
-    private static final long BOX_HOLD_MS = 1500;
+    private static final long BOX_HOLD_MS = 3000;
+    private static final float TRACK_MATCH_IOU_THRESHOLD = 0.40f;
+
+    private static final int MAX_NEAR_RESULTS = 3;
+
+    // Box quá nhỏ thì xem là vật ở xa
+    private static final float MIN_NEAR_BOX_AREA_RATIO = 0.05f;
+
+    // Chỉ là "ưu tiên" camera trước, không bắt buộc
+    // Nếu emulator của bạn hay lỗi camera trước thì có thể đổi tạm thành false
+    private static final boolean USE_FRONT_CAMERA = true;
 
     private static final String[][] LANGS = {
             {"Vietnamese", "vi"},
@@ -104,6 +116,7 @@ public class StreamingFragment extends Fragment {
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private boolean isOfflineModelReady = false;
+    private boolean isUsingFrontCamera = false;
     private String currentTargetCode = "vi";
 
     private static class TrackedDetection {
@@ -162,7 +175,6 @@ public class StreamingFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
         if (spinnerTargetLanguage != null) {
             applyDefaultTargetLanguage(true);
         }
@@ -185,7 +197,6 @@ public class StreamingFragment extends Fragment {
 
         spinnerTargetLanguage.setAdapter(adapter);
 
-        // Lấy default target language từ SettingsPreferences
         applyDefaultTargetLanguage(false);
 
         spinnerTargetLanguage.setOnItemClickListener((parent, view, position, id) -> {
@@ -275,13 +286,34 @@ public class StreamingFragment extends Fragment {
 
                 analysis.setAnalyzer(cameraExecutor, this::analyzeFrame);
 
+                CameraSelector preferredSelector = USE_FRONT_CAMERA
+                        ? CameraSelector.DEFAULT_FRONT_CAMERA
+                        : CameraSelector.DEFAULT_BACK_CAMERA;
+
+                CameraSelector fallbackSelector = USE_FRONT_CAMERA
+                        ? CameraSelector.DEFAULT_BACK_CAMERA
+                        : CameraSelector.DEFAULT_FRONT_CAMERA;
+
+                CameraSelector selector;
+
+                if (provider.hasCamera(preferredSelector)) {
+                    selector = preferredSelector;
+                    isUsingFrontCamera = USE_FRONT_CAMERA;
+                } else if (provider.hasCamera(fallbackSelector)) {
+                    selector = fallbackSelector;
+                    isUsingFrontCamera = !USE_FRONT_CAMERA;
+                } else {
+                    throw new IllegalStateException("Thiết bị hoặc emulator không có camera phù hợp");
+                }
+
                 provider.unbindAll();
                 provider.bindToLifecycle(
                         this,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        selector,
                         preview,
                         analysis
                 );
+
             } catch (Exception e) {
                 Log.e(TAG, "startCamera failed", e);
                 mainHandler.post(() ->
@@ -312,8 +344,16 @@ public class StreamingFragment extends Fragment {
         final int imgH = bitmap.getHeight();
 
         List<YoloV8Classifier.Result> results;
+
         try {
-            results = YoloV8Classifier.getInstance(requireContext()).detectTop3(bitmap);
+            results = YoloV8Classifier.getInstance(requireContext()).detect(bitmap);
+
+            if (isUsingFrontCamera) {
+                results = mirrorResultsHorizontally(results, imgW);
+            }
+
+            results = filterNearestTop3(results, imgW, imgH);
+
         } catch (Exception e) {
             Log.e(TAG, "YOLO detect failed", e);
             final String errorText = buildErrorMessage(e);
@@ -328,7 +368,74 @@ public class StreamingFragment extends Fragment {
             return;
         }
 
-        mainHandler.post(() -> updateTrackedDetections(results, imgW, imgH));
+        final List<YoloV8Classifier.Result> finalResults = results;
+        final int finalImgW = imgW;
+        final int finalImgH = imgH;
+
+        mainHandler.post(() -> updateTrackedDetections(finalResults, finalImgW, finalImgH));
+    }
+
+    private List<YoloV8Classifier.Result> mirrorResultsHorizontally(
+            List<YoloV8Classifier.Result> input,
+            int imageWidth
+    ) {
+        List<YoloV8Classifier.Result> mirrored = new ArrayList<>();
+        for (YoloV8Classifier.Result r : input) {
+            float newLeft = imageWidth - r.right;
+            float newRight = imageWidth - r.left;
+
+            mirrored.add(new YoloV8Classifier.Result(
+                    r.label,
+                    r.conf,
+                    newLeft,
+                    r.top,
+                    newRight,
+                    r.bottom
+            ));
+        }
+        return mirrored;
+    }
+
+    private List<YoloV8Classifier.Result> filterNearestTop3(
+            List<YoloV8Classifier.Result> input,
+            int imageWidth,
+            int imageHeight
+    ) {
+        if (input == null || input.isEmpty()) return new ArrayList<>();
+
+        float imageArea = imageWidth * imageHeight;
+        List<YoloV8Classifier.Result> filtered = new ArrayList<>();
+
+        for (YoloV8Classifier.Result r : input) {
+            float w = Math.max(0f, r.right - r.left);
+            float h = Math.max(0f, r.bottom - r.top);
+            float area = w * h;
+            float areaRatio = area / imageArea;
+
+            if (areaRatio >= MIN_NEAR_BOX_AREA_RATIO) {
+                filtered.add(r);
+            }
+        }
+
+        if (filtered.isEmpty()) {
+            filtered.addAll(input);
+        }
+
+        Collections.sort(filtered, (a, b) -> {
+            float areaA = Math.max(0f, a.right - a.left) * Math.max(0f, a.bottom - a.top);
+            float areaB = Math.max(0f, b.right - b.left) * Math.max(0f, b.bottom - b.top);
+
+            int cmpArea = Float.compare(areaB, areaA);
+            if (cmpArea != 0) return cmpArea;
+
+            return Float.compare(b.conf, a.conf);
+        });
+
+        if (filtered.size() > MAX_NEAR_RESULTS) {
+            return new ArrayList<>(filtered.subList(0, MAX_NEAR_RESULTS));
+        }
+
+        return filtered;
     }
 
     private void updateTrackedDetections(List<YoloV8Classifier.Result> results, int imgW, int imgH) {
@@ -391,7 +498,7 @@ public class StreamingFragment extends Fragment {
             }
         }
 
-        return bestIou >= 0.25f ? bestId : null;
+        return bestIou >= TRACK_MATCH_IOU_THRESHOLD ? bestId : null;
     }
 
     private float computeIou(YoloV8Classifier.Result a, YoloV8Classifier.Result b) {
@@ -627,19 +734,7 @@ public class StreamingFragment extends Fragment {
 
     private Bitmap toBitmap(ImageProxy image) {
         try {
-            ImageProxy.PlaneProxy[] planes = image.getPlanes();
-            ByteBuffer yBuf = planes[0].getBuffer();
-            ByteBuffer uBuf = planes[1].getBuffer();
-            ByteBuffer vBuf = planes[2].getBuffer();
-
-            int ySize = yBuf.remaining();
-            int uSize = uBuf.remaining();
-            int vSize = vBuf.remaining();
-
-            byte[] nv21 = new byte[ySize + uSize + vSize];
-            yBuf.get(nv21, 0, ySize);
-            vBuf.get(nv21, ySize, vSize);
-            uBuf.get(nv21, ySize + vSize, uSize);
+            byte[] nv21 = yuv420888ToNv21(image);
 
             YuvImage yuvImage = new YuvImage(
                     nv21,
@@ -652,16 +747,110 @@ public class StreamingFragment extends Fragment {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             yuvImage.compressToJpeg(
                     new Rect(0, 0, image.getWidth(), image.getHeight()),
-                    80,
+                    90,
                     out
             );
 
             byte[] bytes = out.toByteArray();
-            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            if (bitmap == null) return null;
+
+            int rotationDegrees = image.getImageInfo().getRotationDegrees();
+            return rotateBitmap(bitmap, rotationDegrees);
+
         } catch (Exception e) {
             Log.e(TAG, "toBitmap failed", e);
             return null;
         }
+    }
+
+    private byte[] yuv420888ToNv21(ImageProxy image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int ySize = width * height;
+        int uvSize = width * height / 2;
+
+        byte[] nv21 = new byte[ySize + uvSize];
+
+        ImageProxy.PlaneProxy[] planes = image.getPlanes();
+
+        ByteBuffer yBuffer = planes[0].getBuffer();
+        ByteBuffer uBuffer = planes[1].getBuffer();
+        ByteBuffer vBuffer = planes[2].getBuffer();
+
+        int yRowStride = planes[0].getRowStride();
+        int yPixelStride = planes[0].getPixelStride();
+
+        int uRowStride = planes[1].getRowStride();
+        int uPixelStride = planes[1].getPixelStride();
+
+        int vRowStride = planes[2].getRowStride();
+        int vPixelStride = planes[2].getPixelStride();
+
+        int offset = 0;
+
+        byte[] yRow = new byte[yRowStride];
+        for (int row = 0; row < height; row++) {
+            int rowLength = Math.min(yRowStride, yBuffer.remaining());
+            yBuffer.get(yRow, 0, rowLength);
+
+            if (yPixelStride == 1) {
+                System.arraycopy(yRow, 0, nv21, offset, width);
+                offset += width;
+            } else {
+                for (int col = 0; col < width; col++) {
+                    nv21[offset++] = yRow[col * yPixelStride];
+                }
+            }
+        }
+
+        int chromaHeight = height / 2;
+        int chromaWidth = width / 2;
+
+        byte[] uRow = new byte[uRowStride];
+        byte[] vRow = new byte[vRowStride];
+
+        for (int row = 0; row < chromaHeight; row++) {
+            int uLength = Math.min(uRowStride, uBuffer.remaining());
+            int vLength = Math.min(vRowStride, vBuffer.remaining());
+
+            uBuffer.get(uRow, 0, uLength);
+            vBuffer.get(vRow, 0, vLength);
+
+            for (int col = 0; col < chromaWidth; col++) {
+                int uIndex = Math.min(col * uPixelStride, uLength - 1);
+                int vIndex = Math.min(col * vPixelStride, vLength - 1);
+
+                nv21[offset++] = vRow[vIndex];
+                nv21[offset++] = uRow[uIndex];
+            }
+        }
+
+        return nv21;
+    }
+
+    private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
+        if (bitmap == null) return null;
+        if (rotationDegrees == 0) return bitmap;
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotationDegrees);
+
+        Bitmap rotated = Bitmap.createBitmap(
+                bitmap,
+                0,
+                0,
+                bitmap.getWidth(),
+                bitmap.getHeight(),
+                matrix,
+                true
+        );
+
+        if (rotated != bitmap) {
+            bitmap.recycle();
+        }
+
+        return rotated;
     }
 
     private String buildErrorMessage(Exception e) {
