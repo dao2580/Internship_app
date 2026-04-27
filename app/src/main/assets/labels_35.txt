@@ -1,0 +1,35 @@
+apple
+banana
+bed
+bicycle
+bottle
+bowl
+bus
+cake
+car
+cat
+cell phone
+chair
+clock
+couch
+cow
+cup
+dog
+donut
+fork
+horse
+motorcycle
+orange
+person
+pizza
+refrigerator
+sandwich
+scissors
+teddy bear
+truck
+tv
+pen
+ruler
+watermelon
+fan
+stapler
