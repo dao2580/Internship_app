@@ -13,6 +13,7 @@ glide = "4.16.0"
 navigationFragment = "2.4.2"
 navigationUi = "2.9.6"
 navigationUiVersion = "2.9.7"
+androidxNavigationUi = "2.9.8"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -32,6 +33,7 @@ glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "gl
 androidx-navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 androidx-navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigationUi" }
 androidx-navigation-navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigationUiVersion" }
+androidx-navigation-navigation-ui2 = { group = "androidx.navigation", name = "navigation-ui", version.ref = "androidxNavigationUi" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

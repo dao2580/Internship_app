@@ -3,15 +3,39 @@ package vn.edu.usth.myapplication.data.entity;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "quiz_results")
+@Entity(
+        tableName = "quiz_results",
+        indices = {
+                @Index(value = {"userEmail", "createdAt"}),
+                @Index(value = {"userId", "createdAt"}),
+                @Index(value = {"userId", "sessionId"})
+        }
+)
 public class QuizResultEntity {
 
     @PrimaryKey(autoGenerate = true)
     public int id;
 
+    /*
+     * Old field.
+     * Keep only for backward compatibility and old local data migration.
+     * Do not use userEmail as the main owner key anymore.
+     */
     public String userEmail;
+
+    /*
+     * New owner field.
+     * This is the Supabase Auth user id.
+     */
+    public String userId;
+
+    /*
+     * Remote Supabase quiz_results.id
+     */
+    public String remoteId;
 
     @NonNull
     @ColumnInfo(defaultValue = "''")
@@ -43,7 +67,21 @@ public class QuizResultEntity {
 
     public long createdAt;
 
+    @ColumnInfo(defaultValue = "0")
+    public boolean isSynced;
+
+    @ColumnInfo(defaultValue = "0")
+    public long updatedAt;
+
+    @ColumnInfo(defaultValue = "0")
+    public long deletedAt;
+
     public QuizResultEntity() {
-        this.createdAt = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+
+        this.createdAt = now;
+        this.updatedAt = now;
+        this.deletedAt = 0;
+        this.isSynced = false;
     }
 }

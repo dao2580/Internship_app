@@ -59,18 +59,35 @@ public class StreamingFragment extends Fragment {
     private static final String TAG = "StreamingFragment";
     private static final int REQ_CAMERA = 100;
 
-    private static final long FRAME_INTERVAL_MS = 200;
+    // Chạy detect thường xuyên hơn để tracking mượt hơn.
+    // Code cũ là 200ms, hơi thưa nên box dễ giật.
+    private static final long FRAME_INTERVAL_MS = 120;
+
     private static final long DEBOUNCE_SAVE_MS = 3000;
-    private static final long BOX_HOLD_MS = 3000;
-    private static final float TRACK_MATCH_IOU_THRESHOLD = 0.40f;
+
+    // Code cũ giữ box 3000ms nên box cũ dễ bị treo quá lâu.
+    // Giảm xuống 900ms để mất vật thể thì box biến mất nhanh hơn.
+    private static final long BOX_HOLD_MS = 900;
+
+    // Code cũ dùng IoU 0.40 nên object hơi lệch là bị mất track.
+    // Giảm IoU xuống 0.20 và kết hợp thêm khoảng cách tâm box.
+    private static final float TRACK_MATCH_IOU_THRESHOLD = 0.20f;
+
+    // Nếu tâm box mới vẫn gần tâm box cũ thì vẫn xem là cùng object.
+    private static final float CENTER_DISTANCE_GATE_RATIO = 0.18f;
+
+    // Làm mượt bounding box bằng EMA.
+    // Số càng thấp thì càng mượt nhưng hơi trễ.
+    // 0.35 là mức cân bằng cho app realtime.
+    private static final float BOX_SMOOTH_ALPHA = 0.35f;
 
     private static final int MAX_NEAR_RESULTS = 3;
 
-    // Box quá nhỏ thì xem là vật ở xa
+    // Box quá nhỏ thì xem là vật ở xa.
     private static final float MIN_NEAR_BOX_AREA_RATIO = 0.05f;
 
-    // Chỉ là "ưu tiên" camera trước, không bắt buộc
-    // Nếu emulator của bạn hay lỗi camera trước thì có thể đổi tạm thành false
+    // Chỉ là ưu tiên camera trước, không bắt buộc.
+    // Nếu camera trước bị lệch/mirror sai thì đổi thành false để test camera sau.
     private static final boolean USE_FRONT_CAMERA = true;
 
     private static final String[][] LANGS = {
@@ -88,7 +105,8 @@ public class StreamingFragment extends Fragment {
 
     private PreviewView previewView;
     private BoundingBoxOverlayView overlayView;
-    private MaterialButton btnBack, btnSaveAll;
+    private MaterialButton btnBack;
+    private MaterialButton btnSaveAll;
     private TextView txtStreamingHint;
     private AutoCompleteTextView spinnerTargetLanguage;
 
@@ -101,10 +119,8 @@ public class StreamingFragment extends Fragment {
 
     private final Map<String, Long> lastSavedTime = new HashMap<>();
     private final List<BoundingBoxOverlayView.DetectionItem> currentDetections = new ArrayList<>();
-
     private final Map<String, String> languageMap = new LinkedHashMap<>();
     private final List<String> languageNames = new ArrayList<>();
-
     private final Map<String, TrackedDetection> trackedDetections = new LinkedHashMap<>();
     private final Map<String, String> translationCache = new HashMap<>();
     private final Set<String> pendingTranslationKeys = new HashSet<>();
@@ -112,8 +128,8 @@ public class StreamingFragment extends Fragment {
     private AppRepository repository;
     private AzureTranslatorService translatorService;
     private OfflineTranslatorService offlineTranslatorService;
-
     private TextToSpeech tts;
+
     private boolean ttsReady = false;
     private boolean isOfflineModelReady = false;
     private boolean isUsingFrontCamera = false;
@@ -132,7 +148,6 @@ public class StreamingFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
         View v = inflater.inflate(R.layout.fragment_streaming, container, false);
 
         previewView = v.findViewById(R.id.streaming_preview);
@@ -194,7 +209,6 @@ public class StreamingFragment extends Fragment {
                 android.R.layout.simple_dropdown_item_1line,
                 languageNames
         );
-
         spinnerTargetLanguage.setAdapter(adapter);
 
         applyDefaultTargetLanguage(false);
@@ -214,10 +228,9 @@ public class StreamingFragment extends Fragment {
     private void applyDefaultTargetLanguage(boolean refreshTranslations) {
         String defaultCode = SettingsPreferences.getDefaultLanguageCode(requireContext());
         String defaultName = SettingsPreferences.getLanguageNameFromCode(defaultCode);
-
         boolean changed = !defaultCode.equals(currentTargetCode);
-        currentTargetCode = defaultCode;
 
+        currentTargetCode = defaultCode;
         spinnerTargetLanguage.setText(defaultName, false);
         prepareOfflineTranslator(currentTargetCode);
         setTtsLanguage(currentTargetCode);
@@ -270,8 +283,7 @@ public class StreamingFragment extends Fragment {
     }
 
     private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> future =
-                ProcessCameraProvider.getInstance(requireContext());
+        ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(requireContext());
 
         future.addListener(() -> {
             try {
@@ -283,19 +295,16 @@ public class StreamingFragment extends Fragment {
                 ImageAnalysis analysis = new ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build();
-
                 analysis.setAnalyzer(cameraExecutor, this::analyzeFrame);
 
                 CameraSelector preferredSelector = USE_FRONT_CAMERA
                         ? CameraSelector.DEFAULT_FRONT_CAMERA
                         : CameraSelector.DEFAULT_BACK_CAMERA;
-
                 CameraSelector fallbackSelector = USE_FRONT_CAMERA
                         ? CameraSelector.DEFAULT_BACK_CAMERA
                         : CameraSelector.DEFAULT_FRONT_CAMERA;
 
                 CameraSelector selector;
-
                 if (provider.hasCamera(preferredSelector)) {
                     selector = preferredSelector;
                     isUsingFrontCamera = USE_FRONT_CAMERA;
@@ -307,22 +316,14 @@ public class StreamingFragment extends Fragment {
                 }
 
                 provider.unbindAll();
-                provider.bindToLifecycle(
-                        this,
-                        selector,
-                        preview,
-                        analysis
-                );
-
+                provider.bindToLifecycle(this, selector, preview, analysis);
             } catch (Exception e) {
                 Log.e(TAG, "startCamera failed", e);
-                mainHandler.post(() ->
-                        Toast.makeText(
-                                requireContext(),
-                                "Không thể mở camera: " + buildErrorMessage(e),
-                                Toast.LENGTH_LONG
-                        ).show()
-                );
+                mainHandler.post(() -> Toast.makeText(
+                        requireContext(),
+                        "Không thể mở camera: " + buildErrorMessage(e),
+                        Toast.LENGTH_LONG
+                ).show());
             }
         }, ContextCompat.getMainExecutor(requireContext()));
     }
@@ -337,14 +338,12 @@ public class StreamingFragment extends Fragment {
 
         Bitmap bitmap = toBitmap(image);
         image.close();
-
         if (bitmap == null) return;
 
         final int imgW = bitmap.getWidth();
         final int imgH = bitmap.getHeight();
 
         List<YoloV8Classifier.Result> results;
-
         try {
             results = YoloV8Classifier.getInstance(requireContext()).detect(bitmap);
 
@@ -353,11 +352,9 @@ public class StreamingFragment extends Fragment {
             }
 
             results = filterNearestTop3(results, imgW, imgH);
-
         } catch (Exception e) {
             Log.e(TAG, "YOLO detect failed", e);
             final String errorText = buildErrorMessage(e);
-
             mainHandler.post(() -> {
                 overlayView.clear();
                 trackedDetections.clear();
@@ -371,7 +368,6 @@ public class StreamingFragment extends Fragment {
         final List<YoloV8Classifier.Result> finalResults = results;
         final int finalImgW = imgW;
         final int finalImgH = imgH;
-
         mainHandler.post(() -> updateTrackedDetections(finalResults, finalImgW, finalImgH));
     }
 
@@ -383,7 +379,6 @@ public class StreamingFragment extends Fragment {
         for (YoloV8Classifier.Result r : input) {
             float newLeft = imageWidth - r.right;
             float newRight = imageWidth - r.left;
-
             mirrored.add(new YoloV8Classifier.Result(
                     r.label,
                     r.conf,
@@ -411,7 +406,6 @@ public class StreamingFragment extends Fragment {
             float h = Math.max(0f, r.bottom - r.top);
             float area = w * h;
             float areaRatio = area / imageArea;
-
             if (areaRatio >= MIN_NEAR_BOX_AREA_RATIO) {
                 filtered.add(r);
             }
@@ -424,17 +418,14 @@ public class StreamingFragment extends Fragment {
         Collections.sort(filtered, (a, b) -> {
             float areaA = Math.max(0f, a.right - a.left) * Math.max(0f, a.bottom - a.top);
             float areaB = Math.max(0f, b.right - b.left) * Math.max(0f, b.bottom - b.top);
-
             int cmpArea = Float.compare(areaB, areaA);
             if (cmpArea != 0) return cmpArea;
-
             return Float.compare(b.conf, a.conf);
         });
 
         if (filtered.size() > MAX_NEAR_RESULTS) {
             return new ArrayList<>(filtered.subList(0, MAX_NEAR_RESULTS));
         }
-
         return filtered;
     }
 
@@ -447,16 +438,16 @@ public class StreamingFragment extends Fragment {
 
         for (YoloV8Classifier.Result result : results) {
             String existingId = findBestMatch(result, matchedIds);
-            TrackedDetection tracked;
 
-            if (existingId != null) {
-                tracked = trackedDetections.get(existingId);
-            } else {
+            TrackedDetection tracked = existingId == null ? null : trackedDetections.get(existingId);
+            if (tracked == null) {
                 tracked = new TrackedDetection();
                 tracked.id = UUID.randomUUID().toString();
+                tracked.result = result;
+            } else {
+                tracked.result = smoothBox(tracked.result, result);
             }
 
-            tracked.result = result;
             tracked.labelVi = VocabMap.getVI(result.label);
             tracked.lastSeenAt = now;
             tracked.translatedText = resolveDisplayTranslation(result.label);
@@ -482,23 +473,78 @@ public class StreamingFragment extends Fragment {
 
     @Nullable
     private String findBestMatch(YoloV8Classifier.Result incoming, Set<String> matchedIds) {
-        float bestIou = 0f;
+        float bestScore = 0f;
         String bestId = null;
 
         for (Map.Entry<String, TrackedDetection> entry : trackedDetections.entrySet()) {
             if (matchedIds.contains(entry.getKey())) continue;
 
             TrackedDetection tracked = entry.getValue();
+            if (tracked.result == null) continue;
             if (!tracked.result.label.equals(incoming.label)) continue;
 
             float iou = computeIou(tracked.result, incoming);
-            if (iou > bestIou) {
-                bestIou = iou;
+            float centerDistance = centerDistanceRatio(tracked.result, incoming);
+
+            // Chấp nhận match nếu box còn overlap đủ hoặc tâm box vẫn gần nhau.
+            // Cách này ổn định hơn IoU đơn thuần.
+            if (iou < TRACK_MATCH_IOU_THRESHOLD && centerDistance > CENTER_DISTANCE_GATE_RATIO) {
+                continue;
+            }
+
+            float centerScore = Math.max(0f, 1f - (centerDistance / CENTER_DISTANCE_GATE_RATIO));
+            float areaPenalty = Math.min(1f, areaChangeRatio(tracked.result, incoming));
+            float score = (0.65f * iou) + (0.35f * centerScore) - (0.10f * areaPenalty);
+
+            if (score > bestScore) {
+                bestScore = score;
                 bestId = entry.getKey();
             }
         }
 
-        return bestIou >= TRACK_MATCH_IOU_THRESHOLD ? bestId : null;
+        return bestId;
+    }
+
+    private YoloV8Classifier.Result smoothBox(
+            @Nullable YoloV8Classifier.Result previous,
+            YoloV8Classifier.Result current
+    ) {
+        if (previous == null) return current;
+
+        return new YoloV8Classifier.Result(
+                current.label,
+                current.conf,
+                lerp(previous.left, current.left, BOX_SMOOTH_ALPHA),
+                lerp(previous.top, current.top, BOX_SMOOTH_ALPHA),
+                lerp(previous.right, current.right, BOX_SMOOTH_ALPHA),
+                lerp(previous.bottom, current.bottom, BOX_SMOOTH_ALPHA)
+        );
+    }
+
+    private float lerp(float start, float end, float alpha) {
+        return start + ((end - start) * alpha);
+    }
+
+    private float centerDistanceRatio(YoloV8Classifier.Result a, YoloV8Classifier.Result b) {
+        float ax = (a.left + a.right) / 2f;
+        float ay = (a.top + a.bottom) / 2f;
+        float bx = (b.left + b.right) / 2f;
+        float by = (b.top + b.bottom) / 2f;
+
+        float dx = ax - bx;
+        float dy = ay - by;
+        float distance = (float) Math.sqrt((dx * dx) + (dy * dy));
+
+        float diagonal = (float) Math.sqrt((lastImageW * lastImageW) + (lastImageH * lastImageH));
+        return diagonal <= 0f ? 1f : distance / diagonal;
+    }
+
+    private float areaChangeRatio(YoloV8Classifier.Result a, YoloV8Classifier.Result b) {
+        float areaA = Math.max(0f, a.right - a.left) * Math.max(0f, a.bottom - a.top);
+        float areaB = Math.max(0f, b.right - b.left) * Math.max(0f, b.bottom - b.top);
+        float maxArea = Math.max(areaA, areaB);
+        if (maxArea <= 0f) return 1f;
+        return Math.abs(areaA - areaB) / maxArea;
     }
 
     private float computeIou(YoloV8Classifier.Result a, YoloV8Classifier.Result b) {
@@ -543,7 +589,7 @@ public class StreamingFragment extends Fragment {
         int count = 0;
         for (BoundingBoxOverlayView.DetectionItem item : currentDetections) {
             if (count == 3) break;
-            if (count > 0) sb.append("   •   ");
+            if (count > 0) sb.append(" • ");
             sb.append(item.result.label)
                     .append(" → ")
                     .append(item.translatedLabel);
@@ -556,6 +602,7 @@ public class StreamingFragment extends Fragment {
         if ("en".equals(currentTargetCode)) {
             return labelEn;
         }
+
         if ("vi".equals(currentTargetCode)) {
             return VocabMap.getVI(labelEn);
         }
@@ -576,7 +623,6 @@ public class StreamingFragment extends Fragment {
 
         String targetCode = currentTargetCode;
         String cacheKey = buildTranslationKey(labelEn, targetCode);
-
         if (translationCache.containsKey(cacheKey) || pendingTranslationKeys.contains(cacheKey)) {
             return;
         }
@@ -635,6 +681,7 @@ public class StreamingFragment extends Fragment {
                 tracked.translatedText = translatedText;
             }
         }
+
         publishTrackedDetections();
     }
 
@@ -665,13 +712,11 @@ public class StreamingFragment extends Fragment {
         for (BoundingBoxOverlayView.DetectionItem item : currentDetections) {
             String label = item.result.label;
             Long lastTime = lastSavedTime.get(label);
-
             if (lastTime != null && now - lastTime < DEBOUNCE_SAVE_MS) {
                 continue;
             }
 
             lastSavedTime.put(label, now);
-
             repository.saveLearnedWord(
                     email,
                     label,
@@ -721,9 +766,7 @@ public class StreamingFragment extends Fragment {
         try {
             Locale locale = Locale.forLanguageTag(code);
             int result = tts.setLanguage(locale);
-
-            if (result == TextToSpeech.LANG_MISSING_DATA
-                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 result = tts.setLanguage(Locale.US);
             }
             return result;
@@ -757,7 +800,6 @@ public class StreamingFragment extends Fragment {
 
             int rotationDegrees = image.getImageInfo().getRotationDegrees();
             return rotateBitmap(bitmap, rotationDegrees);
-
         } catch (Exception e) {
             Log.e(TAG, "toBitmap failed", e);
             return null;
@@ -767,29 +809,26 @@ public class StreamingFragment extends Fragment {
     private byte[] yuv420888ToNv21(ImageProxy image) {
         int width = image.getWidth();
         int height = image.getHeight();
+
         int ySize = width * height;
         int uvSize = width * height / 2;
-
         byte[] nv21 = new byte[ySize + uvSize];
 
         ImageProxy.PlaneProxy[] planes = image.getPlanes();
-
         ByteBuffer yBuffer = planes[0].getBuffer();
         ByteBuffer uBuffer = planes[1].getBuffer();
         ByteBuffer vBuffer = planes[2].getBuffer();
 
         int yRowStride = planes[0].getRowStride();
         int yPixelStride = planes[0].getPixelStride();
-
         int uRowStride = planes[1].getRowStride();
         int uPixelStride = planes[1].getPixelStride();
-
         int vRowStride = planes[2].getRowStride();
         int vPixelStride = planes[2].getPixelStride();
 
         int offset = 0;
-
         byte[] yRow = new byte[yRowStride];
+
         for (int row = 0; row < height; row++) {
             int rowLength = Math.min(yRowStride, yBuffer.remaining());
             yBuffer.get(yRow, 0, rowLength);
@@ -806,21 +845,18 @@ public class StreamingFragment extends Fragment {
 
         int chromaHeight = height / 2;
         int chromaWidth = width / 2;
-
         byte[] uRow = new byte[uRowStride];
         byte[] vRow = new byte[vRowStride];
 
         for (int row = 0; row < chromaHeight; row++) {
             int uLength = Math.min(uRowStride, uBuffer.remaining());
             int vLength = Math.min(vRowStride, vBuffer.remaining());
-
             uBuffer.get(uRow, 0, uLength);
             vBuffer.get(vRow, 0, vLength);
 
             for (int col = 0; col < chromaWidth; col++) {
                 int uIndex = Math.min(col * uPixelStride, uLength - 1);
                 int vIndex = Math.min(col * vPixelStride, vLength - 1);
-
                 nv21[offset++] = vRow[vIndex];
                 nv21[offset++] = uRow[uIndex];
             }
@@ -872,10 +908,8 @@ public class StreamingFragment extends Fragment {
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         if (requestCode == REQ_CAMERA) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startCamera();
             } else {
                 toast("Bạn cần cấp quyền camera để dùng chế độ streaming");

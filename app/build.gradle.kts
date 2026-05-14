@@ -42,6 +42,18 @@ android {
         buildConfigField(
             "String", "AZURE_TRANSLATOR_REGION", "\"${properties.getProperty("AZURE_TRANSLATOR_REGION", "")}\""
         )
+
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${properties.getProperty("SUPABASE_URL", "")}\""
+        )
+
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            "\"${properties.getProperty("SUPABASE_ANON_KEY", "")}\""
+        )
     }
 
     androidResources {
@@ -86,13 +98,14 @@ dependencies {
 
     // Azure Cognitive Services Translator
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.11.0")
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.navigation.navigation.ui)
 
     // ML KIT
     implementation("com.google.mlkit:translate:17.0.3")
+    implementation(libs.androidx.navigation.navigation.ui2)
 
     // Test dependencies
     testImplementation(libs.junit)

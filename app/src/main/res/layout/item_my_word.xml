@@ -64,15 +64,6 @@
                 android:padding="8dp"
                 android:src="@android:drawable/ic_lock_silent_mode_off" />
 
-            <ImageButton
-                android:id="@+id/btn_record_word"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="6dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Record pronunciation"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_btn_speak_now" />
         </LinearLayout>
 
     </LinearLayout>

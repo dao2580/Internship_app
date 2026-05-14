@@ -15,33 +15,34 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
-public class ForgotPasswordFragment extends Fragment {
+import vn.edu.usth.myapplication.data.remote.SupabaseAuthService;
 
+public class ForgotPasswordFragment extends Fragment {
     private EditText edtEmail;
-    private UserDatabase userDatabase;
+    private SupabaseAuthService authService;
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View view = inflater.inflate(R.layout.fragment_forgot_password, container, false);
 
-        userDatabase = new UserDatabase(requireContext());
+        authService = new SupabaseAuthService();
 
         edtEmail = view.findViewById(R.id.edtEmail);
         Button btnSendReset = view.findViewById(R.id.btnSendReset);
         Button btnBackToLogin = view.findViewById(R.id.btnBackToLogin);
 
-        btnSendReset.setOnClickListener(v -> handleResetPassword());
-        btnBackToLogin.setOnClickListener(v ->
-                Navigation.findNavController(v).popBackStack()
-        );
+        btnSendReset.setOnClickListener(v -> handleResetPassword(btnSendReset));
+        btnBackToLogin.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
 
         return view;
     }
 
-    private void handleResetPassword() {
+    private void handleResetPassword(Button btnSendReset) {
         String email = edtEmail.getText().toString().trim();
 
         if (TextUtils.isEmpty(email)) {
@@ -56,15 +57,24 @@ public class ForgotPasswordFragment extends Fragment {
             return;
         }
 
-        if (!userDatabase.checkEmailExists(email)) {
-            Toast.makeText(requireContext(),
-                    "This email is not registered",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
+        btnSendReset.setEnabled(false);
 
-        Toast.makeText(requireContext(),
-                "Forgot Password via email is not available yet in local Room mode",
-                Toast.LENGTH_LONG).show();
+        authService.sendPasswordResetEmail(email, new SupabaseAuthService.SimpleCallback() {
+            @Override
+            public void onSuccess() {
+                btnSendReset.setEnabled(true);
+                Toast.makeText(
+                        requireContext(),
+                        "Password reset email sent. Please check your inbox.",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                btnSendReset.setEnabled(true);
+                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

@@ -28,7 +28,7 @@ import vn.edu.usth.myapplication.data.entity.UserSessionEntity;
                 UserEntity.class,
                 UserSessionEntity.class
         },
-        version = 5,
+        version = 7,
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -36,9 +36,13 @@ public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
     public abstract LearnedWordDao learnedWordDao();
+
     public abstract QuizResultDao quizResultDao();
+
     public abstract QuizSessionDao quizSessionDao();
+
     public abstract UserDao userDao();
+
     public abstract UserSessionDao userSessionDao();
 
     private static final Migration MIGRATION_2_3 = new Migration(2, 3) {
@@ -101,6 +105,64 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    private static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE learned_words ADD COLUMN userId TEXT");
+            database.execSQL("ALTER TABLE learned_words ADD COLUMN remoteId TEXT");
+            database.execSQL("ALTER TABLE learned_words ADD COLUMN isSynced INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE learned_words ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE learned_words ADD COLUMN deletedAt INTEGER NOT NULL DEFAULT 0");
+
+            database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_learned_words_userId_labelEn_targetLang " +
+                            "ON learned_words(userId, labelEn, targetLang)"
+            );
+
+            database.execSQL("ALTER TABLE quiz_sessions ADD COLUMN userId TEXT");
+            database.execSQL("ALTER TABLE quiz_sessions ADD COLUMN remoteId TEXT");
+            database.execSQL("ALTER TABLE quiz_sessions ADD COLUMN isSynced INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE quiz_sessions ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE quiz_sessions ADD COLUMN deletedAt INTEGER NOT NULL DEFAULT 0");
+
+            database.execSQL("ALTER TABLE quiz_results ADD COLUMN userId TEXT");
+            database.execSQL("ALTER TABLE quiz_results ADD COLUMN remoteId TEXT");
+            database.execSQL("ALTER TABLE quiz_results ADD COLUMN isSynced INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE quiz_results ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE quiz_results ADD COLUMN deletedAt INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
+    private static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_quiz_sessions_userEmail_createdAt " +
+                            "ON quiz_sessions(userEmail, createdAt)"
+            );
+
+            database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_quiz_sessions_userId_createdAt " +
+                            "ON quiz_sessions(userId, createdAt)"
+            );
+
+            database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_quiz_results_userEmail_createdAt " +
+                            "ON quiz_results(userEmail, createdAt)"
+            );
+
+            database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_quiz_results_userId_createdAt " +
+                            "ON quiz_results(userId, createdAt)"
+            );
+
+            database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_quiz_results_userId_sessionId " +
+                            "ON quiz_results(userId, sessionId)"
+            );
+        }
+    };
+
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
@@ -110,11 +172,18 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "camStudy.db"
                             )
-                            .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                            .addMigrations(
+                                    MIGRATION_2_3,
+                                    MIGRATION_3_4,
+                                    MIGRATION_4_5,
+                                    MIGRATION_5_6,
+                                    MIGRATION_6_7
+                            )
                             .build();
                 }
             }
         }
+
         return INSTANCE;
     }
 }

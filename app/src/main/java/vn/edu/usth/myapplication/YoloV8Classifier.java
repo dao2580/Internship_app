@@ -26,30 +26,105 @@ import java.util.List;
 public final class YoloV8Classifier {
 
     private static final String TAG = "YoloV8Classifier";
+
     private static final String LABEL_FILE = "labels_35.txt";
 
-    // Ưu tiên float16 trước để chạy mobile nhẹ hơn
+    /*
+     * Sửa thứ tự ưu tiên model:
+     * - Ưu tiên float32 trước để nhận diện ổn định hơn.
+     * - Nếu máy yếu quá hoặc app lag, có thể đổi best_35_float16.tflite lên đầu lại.
+     */
     private static final String[] MODEL_CANDIDATES = {
-            "best_35_float16.tflite",
             "best_35_float32.tflite",
-            "best_float16.tflite",
+            "best_35_float16.tflite",
             "best_float32.tflite",
+            "best_float16.tflite",
             "best.tflite",
-            "yolo26n_float16.tflite",
             "yolo26n_float32.tflite",
+            "yolo26n_float16.tflite",
             "yolo26n.tflite"
     };
 
     private static final int EXPECTED_LABEL_COUNT = 35;
-    private static final float SCORE_THRESHOLD = 0.20f;
-    private static final float NMS_IOU_THRESHOLD = 0.45f;
 
-    // Output model hiện tại của bạn đang parse theo xyxy
+    /*
+     * Code cũ là 0.20f, quá thấp nên dễ nhận sai object.
+     * 0.45f sẽ lọc bớt dự đoán yếu.
+     * Nếu sau khi sửa mà ít detect quá, giảm xuống 0.35f.
+     */
+    private static final float SCORE_THRESHOLD = 0.25f;
+
+    /*
+     * NMS cùng class.
+     */
+    private static final float NMS_IOU_THRESHOLD = 0.50f;
+
+    /*
+     * NMS khác class.
+     * Dùng để xử lý trường hợp cùng một vật nhưng model trả về 2 label khác nhau,
+     * ví dụ bottle/cup, chair/couch, apple/orange.
+     */
+    private static final float CROSS_CLASS_NMS_IOU_THRESHOLD = 0.65f;
+
+    /*
+     * Lọc box quá nhỏ hoặc quá lớn.
+     * Box quá nhỏ thường là nhiễu.
+     */
+    private static final float MIN_BOX_AREA_RATIO = 0.001f;
+    private static final float MAX_BOX_AREA_RATIO = 0.98f;
+    private static final float MIN_BOX_SIDE_PX = 4f;
+
+    /*
+     * Output model hiện tại của bạn đang parse theo xyxy.
+     * Nếu box bị lệch hình dạng rất nặng thì mới đổi thử sang XYWH.
+     */
     private static final BoxFormat END2END_BOX_FORMAT = BoxFormat.XYXY;
 
+    /*
+     * Fallback cho labels_35.txt nếu file labels bị ghi thành một dòng.
+     * Thứ tự này phải khớp đúng thứ tự class lúc train model.
+     */
+    private static final String[] LABELS_35_FALLBACK = {
+            "apple",
+            "banana",
+            "bed",
+            "bicycle",
+            "bottle",
+            "bowl",
+            "bus",
+            "cake",
+            "car",
+            "cat",
+            "cell phone",
+            "chair",
+            "clock",
+            "couch",
+            "cow",
+            "cup",
+            "dog",
+            "donut",
+            "fork",
+            "horse",
+            "motorcycle",
+            "orange",
+            "person",
+            "pizza",
+            "refrigerator",
+            "sandwich",
+            "scissors",
+            "teddy bear",
+            "truck",
+            "tv",
+            "pen",
+            "ruler",
+            "watermelon",
+            "fan",
+            "stapler"
+    };
+
     private enum OutputMode {
-        END2END_HWC, // [1, N, 6]
-        END2END_CHW  // [1, 6, N]
+        END2END_HWC,
+        END2END_CHW
     }
 
     private enum BoxFormat {
@@ -67,9 +142,9 @@ public final class YoloV8Classifier {
     private final int outDim1;
     private final int outDim2;
     private final OutputMode outputMode;
+
     private final List<String> labels = new ArrayList<>();
 
-    // Reuse buffers để giảm lag
     private final ByteBuffer inputBuffer;
     private final int[] pixelBuffer;
     private final float[][][] outputBuffer;
@@ -112,7 +187,9 @@ public final class YoloV8Classifier {
 
             if (labels.size() != EXPECTED_LABEL_COUNT) {
                 throw new IllegalStateException(
-                        "labels_35.txt phai co " + EXPECTED_LABEL_COUNT + " dong, hien tai = " + labels.size()
+                        "labels_35.txt phải có " + EXPECTED_LABEL_COUNT
+                                + " label, hiện tại = " + labels.size()
+                                + ". Hãy kiểm tra file app/src/main/assets/labels_35.txt"
                 );
             }
 
@@ -143,6 +220,7 @@ public final class YoloV8Classifier {
             }
 
             int[] outputShape = interpreter.getOutputTensor(0).shape();
+
             if (outputShape.length != 3) {
                 throw new IllegalStateException("Unexpected output tensor rank: " + Arrays.toString(outputShape));
             }
@@ -151,16 +229,20 @@ public final class YoloV8Classifier {
             outDim2 = outputShape[2];
             outputMode = resolveOutputMode(outDim1, outDim2);
 
-            inputBuffer = ByteBuffer.allocateDirect(4 * inputWidth * inputHeight * 3)
+            inputBuffer = ByteBuffer
+                    .allocateDirect(4 * inputWidth * inputHeight * 3)
                     .order(ByteOrder.nativeOrder());
+
             pixelBuffer = new int[inputWidth * inputHeight];
             outputBuffer = new float[1][outDim1][outDim2];
 
             Log.d(TAG, "Loaded model: " + modelFileUsed);
             Log.d(TAG, "labels size = " + labels.size());
+            Log.d(TAG, "labels = " + labels);
             Log.d(TAG, "input shape = " + Arrays.toString(inputShape));
             Log.d(TAG, "output[0] shape = " + Arrays.toString(outputShape));
             Log.d(TAG, "output mode = " + outputMode);
+            Log.d(TAG, "score threshold = " + SCORE_THRESHOLD);
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to load YOLO model", e);
@@ -179,7 +261,7 @@ public final class YoloV8Classifier {
     }
 
     public List<Result> detect(Bitmap bitmap) {
-        return runDetection(bitmap, 10);
+        return runDetection(bitmap, 8);
     }
 
     public List<Result> detectTop3(Bitmap bitmap) {
@@ -187,22 +269,39 @@ public final class YoloV8Classifier {
     }
 
     private List<Result> runDetection(Bitmap bitmap, int maxResults) {
-        if (bitmap == null) return Collections.emptyList();
+        if (bitmap == null) {
+            return Collections.emptyList();
+        }
 
         LetterboxInfo lb = letterbox(bitmap, inputWidth, inputHeight);
+
         preprocessBitmap(lb.bitmap);
 
         interpreter.run(inputBuffer, outputBuffer);
 
-        return postprocess(outputBuffer, bitmap.getWidth(), bitmap.getHeight(), lb.scale, lb.dx, lb.dy, maxResults);
+        return postprocess(
+                outputBuffer,
+                bitmap.getWidth(),
+                bitmap.getHeight(),
+                lb.scale,
+                lb.dx,
+                lb.dy,
+                maxResults
+        );
     }
 
     private OutputMode resolveOutputMode(int d1, int d2) {
-        if (d2 == 6) return OutputMode.END2END_HWC;
-        if (d1 == 6) return OutputMode.END2END_CHW;
+        if (d2 == 6) {
+            return OutputMode.END2END_HWC;
+        }
+
+        if (d1 == 6) {
+            return OutputMode.END2END_CHW;
+        }
 
         throw new IllegalStateException(
-                "Unsupported output shape: [1, " + d1 + ", " + d2 + "]. Expected [1, N, 6] or [1, 6, N]."
+                "Unsupported output shape: [1, " + d1 + ", " + d2 + "]. "
+                        + "Expected [1, N, 6] or [1, 6, N]."
         );
     }
 
@@ -211,6 +310,7 @@ public final class YoloV8Classifier {
         int srcH = src.getHeight();
 
         float scale = Math.min((float) targetW / srcW, (float) targetH / srcH);
+
         int newW = Math.round(srcW * scale);
         int newH = Math.round(srcH * scale);
 
@@ -233,12 +333,13 @@ public final class YoloV8Classifier {
 
     private void preprocessBitmap(Bitmap bitmap) {
         inputBuffer.rewind();
+
         bitmap.getPixels(pixelBuffer, 0, inputWidth, 0, 0, inputWidth, inputHeight);
 
         for (int val : pixelBuffer) {
-            inputBuffer.putFloat(((val >> 16) & 0xFF) / 255f); // R
-            inputBuffer.putFloat(((val >> 8) & 0xFF) / 255f);  // G
-            inputBuffer.putFloat((val & 0xFF) / 255f);         // B
+            inputBuffer.putFloat(((val >> 16) & 0xFF) / 255f);
+            inputBuffer.putFloat(((val >> 8) & 0xFF) / 255f);
+            inputBuffer.putFloat((val & 0xFF) / 255f);
         }
 
         inputBuffer.rewind();
@@ -257,12 +358,28 @@ public final class YoloV8Classifier {
 
         if (outputMode == OutputMode.END2END_HWC) {
             int numBoxes = outDim1;
+
             for (int i = 0; i < numBoxes; i++) {
                 float[] row = output[0][i];
-                addCandidate(decoded, row[0], row[1], row[2], row[3], row[4], row[5], origW, origH, scale, dx, dy);
+
+                addCandidate(
+                        decoded,
+                        row[0],
+                        row[1],
+                        row[2],
+                        row[3],
+                        row[4],
+                        row[5],
+                        origW,
+                        origH,
+                        scale,
+                        dx,
+                        dy
+                );
             }
         } else {
             int numBoxes = outDim2;
+
             for (int i = 0; i < numBoxes; i++) {
                 addCandidate(
                         decoded,
@@ -281,13 +398,21 @@ public final class YoloV8Classifier {
             }
         }
 
-        // Giữ top ứng viên trước NMS để giảm chi phí
         Collections.sort(decoded, (a, b) -> Float.compare(b.score, a.score));
-        if (decoded.size() > 60) {
-            decoded = new ArrayList<>(decoded.subList(0, 60));
+
+        if (decoded.size() > 80) {
+            decoded = new ArrayList<>(decoded.subList(0, 80));
         }
 
         List<Candidate> nms = applyClassWiseNms(decoded, NMS_IOU_THRESHOLD);
+
+        /*
+         * Sửa quan trọng:
+         * Sau khi NMS cùng class, tiếp tục NMS khác class để giảm tình trạng
+         * cùng một vật bị nhận thành nhiều object khác nhau.
+         */
+        nms = applyCrossClassNms(nms, CROSS_CLASS_NMS_IOU_THRESHOLD);
+
         Collections.sort(nms, (a, b) -> Float.compare(b.score, a.score));
 
         if (nms.size() > maxResults) {
@@ -295,9 +420,34 @@ public final class YoloV8Classifier {
         }
 
         List<Result> results = new ArrayList<>();
+
         for (Candidate c : nms) {
-            results.add(new Result(labels.get(c.classId), c.score, c.left, c.top, c.right, c.bottom));
+            Result result = new Result(
+                    labels.get(c.classId),
+                    c.score,
+                    c.left,
+                    c.top,
+                    c.right,
+                    c.bottom
+            );
+
+            results.add(result);
+
+            Log.d(TAG,
+                    "DETECTED: label=" + result.label
+                            + ", score=" + result.conf
+                            + ", box=[" + result.left
+                            + ", " + result.top
+                            + ", " + result.right
+                            + ", " + result.bottom
+                            + "]"
+            );
         }
+
+        if (results.isEmpty()) {
+            Log.d(TAG, "DETECTED: none");
+        }
+
         return results;
     }
 
@@ -315,10 +465,19 @@ public final class YoloV8Classifier {
             float dx,
             float dy
     ) {
-        if (score < SCORE_THRESHOLD) return;
+        if (Float.isNaN(score) || Float.isInfinite(score)) {
+            return;
+        }
+
+        if (score < SCORE_THRESHOLD) {
+            return;
+        }
 
         int classId = Math.round(classValue);
-        if (classId < 0 || classId >= labels.size()) return;
+
+        if (classId < 0 || classId >= labels.size()) {
+            return;
+        }
 
         float left;
         float top;
@@ -331,12 +490,14 @@ public final class YoloV8Classifier {
                 float cy = v1;
                 float w = v2;
                 float h = v3;
+
                 left = cx - (w / 2f);
                 top = cy - (h / 2f);
                 right = cx + (w / 2f);
                 bottom = cy + (h / 2f);
                 break;
             }
+
             case YXYX: {
                 top = v0;
                 left = v1;
@@ -344,6 +505,7 @@ public final class YoloV8Classifier {
                 right = v3;
                 break;
             }
+
             case XYXY:
             default: {
                 left = v0;
@@ -354,7 +516,6 @@ public final class YoloV8Classifier {
             }
         }
 
-        // Nếu output đang normalize 0..1 thì đổi về pixel trên ảnh input
         if (left <= 1.5f && top <= 1.5f && right <= 1.5f && bottom <= 1.5f) {
             left *= inputWidth;
             top *= inputHeight;
@@ -362,7 +523,6 @@ public final class YoloV8Classifier {
             bottom *= inputHeight;
         }
 
-        // Bỏ padding, map ngược về ảnh gốc
         left = (left - dx) / scale;
         right = (right - dx) / scale;
         top = (top - dy) / scale;
@@ -373,7 +533,23 @@ public final class YoloV8Classifier {
         right = clamp(right, 0f, origW);
         bottom = clamp(bottom, 0f, origH);
 
-        if (right <= left || bottom <= top) return;
+        if (right <= left || bottom <= top) {
+            return;
+        }
+
+        float boxW = right - left;
+        float boxH = bottom - top;
+
+        if (boxW < MIN_BOX_SIDE_PX || boxH < MIN_BOX_SIDE_PX) {
+            return;
+        }
+
+        float imageArea = Math.max(1f, origW * origH);
+        float boxAreaRatio = (boxW * boxH) / imageArea;
+
+        if (boxAreaRatio < MIN_BOX_AREA_RATIO || boxAreaRatio > MAX_BOX_AREA_RATIO) {
+            return;
+        }
 
         out.add(new Candidate(classId, score, left, top, right, bottom));
     }
@@ -386,18 +562,59 @@ public final class YoloV8Classifier {
         boolean[] removed = new boolean[sorted.size()];
 
         for (int i = 0; i < sorted.size(); i++) {
-            if (removed[i]) continue;
+            if (removed[i]) {
+                continue;
+            }
 
             Candidate a = sorted.get(i);
             kept.add(a);
 
             for (int j = i + 1; j < sorted.size(); j++) {
-                if (removed[j]) continue;
+                if (removed[j]) {
+                    continue;
+                }
 
                 Candidate b = sorted.get(j);
-                if (a.classId != b.classId) continue;
+
+                if (a.classId != b.classId) {
+                    continue;
+                }
 
                 float iou = computeIou(a, b);
+
+                if (iou >= iouThreshold) {
+                    removed[j] = true;
+                }
+            }
+        }
+
+        return kept;
+    }
+
+    private List<Candidate> applyCrossClassNms(List<Candidate> input, float iouThreshold) {
+        List<Candidate> sorted = new ArrayList<>(input);
+        Collections.sort(sorted, (a, b) -> Float.compare(b.score, a.score));
+
+        List<Candidate> kept = new ArrayList<>();
+        boolean[] removed = new boolean[sorted.size()];
+
+        for (int i = 0; i < sorted.size(); i++) {
+            if (removed[i]) {
+                continue;
+            }
+
+            Candidate a = sorted.get(i);
+            kept.add(a);
+
+            for (int j = i + 1; j < sorted.size(); j++) {
+                if (removed[j]) {
+                    continue;
+                }
+
+                Candidate b = sorted.get(j);
+
+                float iou = computeIou(a, b);
+
                 if (iou >= iouThreshold) {
                     removed[j] = true;
                 }
@@ -419,6 +636,7 @@ public final class YoloV8Classifier {
 
         float areaA = Math.max(0f, a.right - a.left) * Math.max(0f, a.bottom - a.top);
         float areaB = Math.max(0f, b.right - b.left) * Math.max(0f, b.bottom - b.top);
+
         float union = areaA + areaB - interArea;
 
         return union <= 0f ? 0f : interArea / union;
@@ -434,11 +652,14 @@ public final class YoloV8Classifier {
                 return candidate;
             }
         }
-        throw new IOException("No YOLO model found in assets. Expected one of: " + Arrays.toString(MODEL_CANDIDATES));
+
+        throw new IOException("No YOLO model found in assets. Expected one of: "
+                + Arrays.toString(MODEL_CANDIDATES));
     }
 
     private boolean assetExists(Context context, String assetName) {
         AssetFileDescriptor fd = null;
+
         try {
             fd = context.getAssets().openFd(assetName);
             return true;
@@ -456,6 +677,7 @@ public final class YoloV8Classifier {
 
     private MappedByteBuffer loadModelFile(Context context, String modelName) throws IOException {
         AssetFileDescriptor fd = context.getAssets().openFd(modelName);
+
         try (FileInputStream is = new FileInputStream(fd.getFileDescriptor())) {
             return is.getChannel().map(
                     FileChannel.MapMode.READ_ONLY,
@@ -466,13 +688,36 @@ public final class YoloV8Classifier {
     }
 
     private void loadLabels(Context context, String fileName) throws IOException {
-        try (BufferedReader r = new BufferedReader(new InputStreamReader(context.getAssets().open(fileName)))) {
+        labels.clear();
+
+        try (BufferedReader r = new BufferedReader(
+                new InputStreamReader(context.getAssets().open(fileName))
+        )) {
             String line;
+
             while ((line = r.readLine()) != null) {
                 line = line.trim();
+
                 if (!line.isEmpty()) {
                     labels.add(line);
                 }
+            }
+        }
+
+        /*
+         * Nếu labels_35.txt bị ghi thành một dòng dài thì dùng fallback.
+         * Cách này giúp tránh lỗi do file label bị format sai.
+         */
+        if (labels.size() == 1 && fileName.equals(LABEL_FILE)) {
+            String oneLine = labels.get(0).toLowerCase();
+
+            if (oneLine.contains("apple")
+                    && oneLine.contains("cell phone")
+                    && oneLine.contains("teddy bear")
+                    && oneLine.contains("stapler")) {
+                labels.clear();
+                Collections.addAll(labels, LABELS_35_FALLBACK);
+                Log.w(TAG, "labels_35.txt appears to be one line. Using LABELS_35_FALLBACK.");
             }
         }
     }

@@ -15,16 +15,17 @@ import vn.edu.usth.myapplication.data.entity.LearnedWordEntity;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
 
-    public interface OnFavoriteClickListener {
+    public interface OnWordActionListener {
         void onFavoriteClick(LearnedWordEntity item);
+        void onSpeakClick(LearnedWordEntity item);
     }
 
     private final List<LearnedWordEntity> items;
-    private final OnFavoriteClickListener favoriteListener;
+    private final OnWordActionListener listener;
 
-    public HistoryAdapter(List<LearnedWordEntity> items, OnFavoriteClickListener favoriteListener) {
+    public HistoryAdapter(List<LearnedWordEntity> items, OnWordActionListener listener) {
         this.items = items;
-        this.favoriteListener = favoriteListener;
+        this.listener = listener;
     }
 
     @NonNull
@@ -39,26 +40,31 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LearnedWordEntity entry = items.get(position);
 
-        holder.sourceText.setText(entry.labelEn);
+        holder.sourceText.setText(entry.labelEn != null ? entry.labelEn : "");
+
         holder.translatedText.setText(
                 entry.translated != null && !entry.translated.isEmpty()
                         ? entry.translated
                         : entry.labelVi
         );
 
-        if (holder.btnFavorite != null) {
-            holder.btnFavorite.setImageResource(
-                    entry.isFavorite
-                            ? android.R.drawable.btn_star_big_on
-                            : android.R.drawable.btn_star_big_off
-            );
+        holder.btnSpeak.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onSpeakClick(entry);
+            }
+        });
 
-            holder.btnFavorite.setOnClickListener(v -> {
-                if (favoriteListener != null) {
-                    favoriteListener.onFavoriteClick(entry);
-                }
-            });
-        }
+        holder.btnFavorite.setImageResource(
+                entry.isFavorite
+                        ? android.R.drawable.btn_star_big_on
+                        : android.R.drawable.btn_star_big_off
+        );
+
+        holder.btnFavorite.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onFavoriteClick(entry);
+            }
+        });
     }
 
     @Override
@@ -69,12 +75,15 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView sourceText;
         TextView translatedText;
+        ImageButton btnSpeak;
         ImageButton btnFavorite;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+
             sourceText = itemView.findViewById(R.id.et_source_text);
             translatedText = itemView.findViewById(R.id.et_translated_text);
+            btnSpeak = itemView.findViewById(R.id.btn_speak_word);
             btnFavorite = itemView.findViewById(R.id.btn_favorite_word);
         }
     }
