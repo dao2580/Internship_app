@@ -36,12 +36,14 @@ import java.util.Set;
 public class PhotoPreviewFragment extends Fragment {
 
     private static final String TAG = "PhotoPreview";
+
     private static final String ARG_PHOTO_URI = "photo_uri";
     private static final String ARG_IS_TEMP = "is_temp";
 
     private ImageView imgPreview;
     private PhotoPreviewOverlayView previewOverlay;
     private TextView txtDetectedObjects;
+
     private FloatingActionButton btnSave;
     private ExtendedFloatingActionButton btnProceedTranslation;
 
@@ -54,6 +56,7 @@ public class PhotoPreviewFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (getArguments() != null) {
             photoUri = getArguments().getString(ARG_PHOTO_URI);
             isTemp = getArguments().getBoolean(ARG_IS_TEMP, false);
@@ -62,9 +65,11 @@ public class PhotoPreviewFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View v = inflater.inflate(R.layout.fragment_photo_preview, container, false);
 
         imgPreview = v.findViewById(R.id.img_preview);
@@ -80,11 +85,16 @@ public class PhotoPreviewFragment extends Fragment {
         );
 
         btnSave.setVisibility(isTemp ? View.VISIBLE : View.GONE);
+
         btnSave.setOnClickListener(view -> {
             if (currentBitmap != null) {
                 savePhotoToGallery(currentBitmap);
             } else {
-                Toast.makeText(requireContext(), "No image to save", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        requireContext(),
+                        R.string.no_image_to_save,
+                        Toast.LENGTH_SHORT
+                ).show();
             }
         });
 
@@ -108,7 +118,8 @@ public class PhotoPreviewFragment extends Fragment {
                 );
             } else {
                 bitmap = MediaStore.Images.Media.getBitmap(
-                        requireContext().getContentResolver(), uri
+                        requireContext().getContentResolver(),
+                        uri
                 );
             }
 
@@ -120,16 +131,17 @@ public class PhotoPreviewFragment extends Fragment {
 
         } catch (Exception e) {
             Log.e(TAG, "Failed to load image", e);
+
             Toast.makeText(
                     requireContext(),
-                    "Failed to load image: " + buildErrorMessage(e),
+                    getString(R.string.failed_to_load_image, buildErrorMessage(e)),
                     Toast.LENGTH_LONG
             ).show();
         }
     }
 
     private void detectObjects(Bitmap bitmap) {
-        txtDetectedObjects.setText("Analyzing...");
+        txtDetectedObjects.setText(R.string.analyzing_image);
 
         new Thread(() -> {
             try {
@@ -138,19 +150,25 @@ public class PhotoPreviewFragment extends Fragment {
                         YoloV8Classifier.getInstance(requireContext()).detect(processed);
 
                 Set<String> labels = new LinkedHashSet<>();
-                for (YoloV8Classifier.Result r : results) {
-                    labels.add(r.label);
+
+                for (YoloV8Classifier.Result result : results) {
+                    labels.add(result.label);
                 }
 
                 final YoloV8Classifier.Result topResult =
                         results.isEmpty() ? null : results.get(0);
 
                 requireActivity().runOnUiThread(() -> {
-                    txtDetectedObjects.setText(
-                            labels.isEmpty()
-                                    ? "No objects detected"
-                                    : "Detected: " + String.join(", ", labels)
-                    );
+                    if (labels.isEmpty()) {
+                        txtDetectedObjects.setText(R.string.no_objects_detected);
+                    } else {
+                        txtDetectedObjects.setText(
+                                getString(
+                                        R.string.detected_objects_prefix,
+                                        String.join(", ", labels)
+                                )
+                        );
+                    }
 
                     imgPreview.setImageBitmap(processed);
 
@@ -166,14 +184,19 @@ public class PhotoPreviewFragment extends Fragment {
 
             } catch (Exception e) {
                 Log.e(TAG, "detectObjects FAILED", e);
+
                 final String errorText = buildErrorMessage(e);
 
                 requireActivity().runOnUiThread(() -> {
                     previewOverlay.clear();
-                    txtDetectedObjects.setText("Detect failed: " + errorText);
+
+                    txtDetectedObjects.setText(
+                            getString(R.string.detect_failed_detail, errorText)
+                    );
+
                     Toast.makeText(
                             requireContext(),
-                            "Detect failed: " + errorText,
+                            getString(R.string.detect_failed_detail, errorText),
                             Toast.LENGTH_LONG
                     ).show();
                 });
@@ -197,7 +220,8 @@ public class PhotoPreviewFragment extends Fragment {
                     );
 
                     Uri imageUri = requireContext().getContentResolver().insert(
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            values
                     );
 
                     if (imageUri != null) {
@@ -210,6 +234,7 @@ public class PhotoPreviewFragment extends Fragment {
                             ),
                             "CamStudy"
                     );
+
                     if (!dir.exists()) {
                         dir.mkdirs();
                     }
@@ -233,17 +258,18 @@ public class PhotoPreviewFragment extends Fragment {
                 requireActivity().runOnUiThread(() ->
                         Toast.makeText(
                                 requireContext(),
-                                "Photo saved to gallery!",
+                                R.string.photo_saved_gallery,
                                 Toast.LENGTH_SHORT
                         ).show()
                 );
 
             } catch (Exception e) {
                 Log.e(TAG, "Failed to save photo", e);
+
                 requireActivity().runOnUiThread(() ->
                         Toast.makeText(
                                 requireContext(),
-                                "Failed to save photo: " + buildErrorMessage(e),
+                                getString(R.string.failed_to_save_photo, buildErrorMessage(e)),
                                 Toast.LENGTH_LONG
                         ).show()
                 );
@@ -253,19 +279,25 @@ public class PhotoPreviewFragment extends Fragment {
 
     private void proceedToTranslation() {
         Bundle b = new Bundle();
-        b.putStringArray("detected_objects", detectedObjectsList.toArray(new String[0]));
+        b.putStringArray(
+                "detected_objects",
+                detectedObjectsList.toArray(new String[0])
+        );
         b.putString("photo_uri", photoUri);
 
         NavController navController =
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
+
         navController.navigate(R.id.action_photoPreviewFragment_to_translationFragment, b);
     }
 
     private String buildErrorMessage(Exception e) {
         String msg = e.getMessage();
+
         if (msg == null || msg.trim().isEmpty()) {
             return e.getClass().getSimpleName();
         }
+
         return e.getClass().getSimpleName() + ": " + msg;
     }
 }

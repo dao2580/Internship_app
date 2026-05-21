@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="camera_not_ready">Camera chưa sẵn sàng</string>
+    <string name="photo_capture_error">Lỗi chụp ảnh</string>
+    <string name="camera_start_failed">Không thể khởi động camera</string>
+    <string name="camera_bind_failed">Không thể kết nối camera</string>
+</resources>

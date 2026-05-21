@@ -29,55 +29,61 @@ public class HomeFragment extends Fragment {
     private final ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
-                    // Navigate to PhotoPreviewFragment with imported image
                     Bundle args = new Bundle();
                     args.putString("photo_uri", uri.toString());
                     args.putLong("timestamp", System.currentTimeMillis());
-                    args.putBoolean("is_temp", false); // Imported images are not temp
-                    NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
+                    args.putBoolean("is_temp", false);
+
+                    NavController navController =
+                            Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
+
                     navController.navigate(R.id.nav_photo_preview, args);
                 } else {
-                    Toast.makeText(requireContext(), "No image selected", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(
+                            requireContext(),
+                            R.string.no_image_selected,
+                            Toast.LENGTH_SHORT
+                    ).show();
                 }
             });
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // Set up navigation for Take Photo card
         MaterialCardView takePhotoCard = view.findViewById(R.id.card_take_photo);
+        MaterialCardView quizCard = view.findViewById(R.id.card_quiz);
+        MaterialCardView importImageCard = view.findViewById(R.id.card_import_image);
+        MaterialCardView streamingCard = view.findViewById(R.id.card_streaming);
+
         takePhotoCard.setOnClickListener(v -> {
-            NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
+            NavController navController =
+                    Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
             navController.navigate(R.id.nav_camera);
         });
 
-        // Set up navigation for View History card
-        MaterialCardView quizCard = view.findViewById(R.id.card_quiz);
         quizCard.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
-            bundle.putInt("selected_tab", 2); // 2 = Quiz
+            bundle.putInt("selected_tab", 2);
 
             NavController navController =
                     Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
             navController.navigate(R.id.nav_history, bundle);
         });
 
-        // Set up navigation for Import Image card
-        MaterialCardView importImageCard = view.findViewById(R.id.card_import_image);
-        importImageCard.setOnClickListener(v -> {
-            // Launch image picker
-            pickImageLauncher.launch("image/*");
-        });
+        importImageCard.setOnClickListener(v ->
+                pickImageLauncher.launch("image/*")
+        );
 
-        // Streaming mode
-        MaterialCardView streamingCard = view.findViewById(R.id.card_streaming);
         streamingCard.setOnClickListener(v ->
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
-                        .navigate(R.id.nav_streaming));
+                        .navigate(R.id.nav_streaming)
+        );
 
         return view;
     }

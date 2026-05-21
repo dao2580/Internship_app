@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="unknown_error">Lỗi không xác định</string>
+    <string name="operation_failed">Thao tác thất bại: %1$s</string>
+    <string name="operation_success">Thao tác thành công</string>
+    <string name="loading">Đang tải...</string>
+    <string name="please_wait">Vui lòng chờ...</string>
+    <string name="retry">Thử lại</string>
+</resources>

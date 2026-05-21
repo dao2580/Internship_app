@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="translation_screen_title">Translation</string>
+    <string name="source_text">Source text</string>
+    <string name="translated_text">Translated text</string>
+    <string name="translation_loading">Translating...</string>
+    <string name="translation_empty_result">No translation yet</string>
+</resources>

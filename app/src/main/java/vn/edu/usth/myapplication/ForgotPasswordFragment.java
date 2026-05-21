@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 import vn.edu.usth.myapplication.data.remote.SupabaseAuthService;
 
 public class ForgotPasswordFragment extends Fragment {
+
     private EditText edtEmail;
     private SupabaseAuthService authService;
 
@@ -33,11 +34,15 @@ public class ForgotPasswordFragment extends Fragment {
         authService = new SupabaseAuthService();
 
         edtEmail = view.findViewById(R.id.edtEmail);
+
         Button btnSendReset = view.findViewById(R.id.btnSendReset);
         Button btnBackToLogin = view.findViewById(R.id.btnBackToLogin);
 
         btnSendReset.setOnClickListener(v -> handleResetPassword(btnSendReset));
-        btnBackToLogin.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
+
+        btnBackToLogin.setOnClickListener(v ->
+                Navigation.findNavController(v).popBackStack()
+        );
 
         return view;
     }
@@ -46,13 +51,13 @@ public class ForgotPasswordFragment extends Fragment {
         String email = edtEmail.getText().toString().trim();
 
         if (TextUtils.isEmpty(email)) {
-            edtEmail.setError("Email is required");
+            edtEmail.setError(getString(R.string.email_required));
             edtEmail.requestFocus();
             return;
         }
 
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            edtEmail.setError("Please enter a valid email");
+            edtEmail.setError(getString(R.string.valid_email_required));
             edtEmail.requestFocus();
             return;
         }
@@ -63,9 +68,10 @@ public class ForgotPasswordFragment extends Fragment {
             @Override
             public void onSuccess() {
                 btnSendReset.setEnabled(true);
+
                 Toast.makeText(
                         requireContext(),
-                        "Password reset email sent. Please check your inbox.",
+                        R.string.password_reset_email_sent,
                         Toast.LENGTH_LONG
                 ).show();
             }
@@ -73,7 +79,12 @@ public class ForgotPasswordFragment extends Fragment {
             @Override
             public void onError(String message) {
                 btnSendReset.setEnabled(true);
-                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+
+                Toast.makeText(
+                        requireContext(),
+                        R.string.password_reset_email_failed,
+                        Toast.LENGTH_LONG
+                ).show();
             }
         });
     }

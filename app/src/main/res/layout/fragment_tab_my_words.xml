@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/background_color">
 
-    <!-- Header đếm từ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,7 +19,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Từ đã học"
+            android:text="@string/words_learned"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/primary_text" />
@@ -28,7 +28,7 @@
             android:id="@+id/txt_word_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 từ"
+            android:text="@string/my_words"
             android:textSize="14sp"
             android:textColor="@color/primary_color" />
 
@@ -38,7 +38,7 @@
         android:id="@+id/txt_empty_words"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Chưa có từ nào được lưu.\nHãy detect và bấm 'Lưu từ' để bắt đầu!"
+        android:text="@string/empty_my_words"
         android:textColor="@color/secondary_text"
         android:textSize="15sp"
         android:gravity="center"

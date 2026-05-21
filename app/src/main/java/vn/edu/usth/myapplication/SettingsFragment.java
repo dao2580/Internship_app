@@ -23,11 +23,13 @@ public class SettingsFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
+
         userDatabase = new UserDatabase(requireContext());
 
         LinearLayout layoutUpdateProfile = view.findViewById(R.id.layout_update_profile);
@@ -39,9 +41,7 @@ public class SettingsFragment extends Fragment {
         layoutUpdateProfile.setOnClickListener(v -> navigateTo(R.id.nav_settings_profile));
         layoutManagePrivacy.setOnClickListener(v -> navigateTo(R.id.nav_settings_privacy));
         layoutUserPreferences.setOnClickListener(v -> navigateTo(R.id.nav_settings_user_preferences));
-
         btnFeedback.setOnClickListener(v -> sendFeedback());
-
         layoutLogout.setOnClickListener(v -> showLogoutDialog());
 
         return view;
@@ -57,27 +57,36 @@ public class SettingsFragment extends Fragment {
             Intent intent = new Intent(Intent.ACTION_SENDTO);
             intent.setData(Uri.parse("mailto:"));
             intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"kingnopro0002@gmail.com"});
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Feedback for CamStudy App");
-            intent.putExtra(Intent.EXTRA_TEXT, "Your feedback here...");
-            startActivity(Intent.createChooser(intent, "Send feedback via..."));
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Phản hồi cho ứng dụng CamStudy");
+            intent.putExtra(Intent.EXTRA_TEXT, "Nhập phản hồi của bạn tại đây...");
+
+            startActivity(Intent.createChooser(intent, getString(R.string.feedback)));
         } catch (Exception e) {
-            Toast.makeText(getContext(), "No email app found!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                    getContext(),
+                    R.string.no_email_app,
+                    Toast.LENGTH_SHORT
+            ).show();
         }
     }
 
     private void showLogoutDialog() {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Logout")
-                .setMessage("Are you sure you want to logout?")
-                .setPositiveButton("Logout", (dialog, which) -> performLogout())
-                .setNegativeButton("Cancel", null)
+                .setTitle(R.string.logout)
+                .setMessage(R.string.logout_confirm)
+                .setPositiveButton(R.string.logout, (dialog, which) -> performLogout())
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
     private void performLogout() {
         userDatabase.logout();
 
-        Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(
+                requireContext(),
+                R.string.logged_out_success,
+                Toast.LENGTH_SHORT
+        ).show();
 
         NavController navController =
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);

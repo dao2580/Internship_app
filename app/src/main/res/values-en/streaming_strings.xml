@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="streaming_hint">Point the camera at an object...</string>
+    <string name="save_detected_word">Save word</string>
+
+    <string name="streaming_camera_open_failed">Cannot open camera: %1$s</string>
+    <string name="streaming_detect_error">Detection error: %1$s</string>
+    <string name="streaming_no_object_to_save">No detected object to save</string>
+    <string name="streaming_saved_words">Saved %1$d words to My Words!</string>
+    <string name="streaming_words_saved_recently">These words were saved recently</string>
+    <string name="streaming_camera_permission_required">Camera permission is required to use streaming mode</string>
+    <string name="streaming_no_speech_content">No content to speak</string>
+</resources>

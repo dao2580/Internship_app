@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -31,7 +32,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cam Study"
+                    android:text="@string/app_name"
                     android:textColor="@color/primary_text"
                     android:textSize="28sp"
                     android:textStyle="bold" />
@@ -95,7 +96,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="Quick Actions"
+            android:text="@string/quick_actions"
             android:textColor="@color/primary_text"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -112,8 +113,8 @@
                 android:id="@+id/card_take_photo"
                 android:layout_width="0dp"
                 android:layout_height="130dp"
-                android:layout_weight="1"
                 android:layout_marginEnd="8dp"
+                android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
@@ -138,7 +139,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="One-Shot"
+                        android:text="@string/one_shot"
                         android:textColor="@android:color/white"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -148,7 +149,7 @@
                         android:layout_height="wrap_content"
                         android:alpha="0.8"
                         android:gravity="center"
-                        android:text="Take a photo &amp; Detect"
+                        android:text="@string/take_photo_detect"
                         android:textColor="@android:color/white"
                         android:textSize="12sp" />
 
@@ -160,8 +161,8 @@
                 android:id="@+id/card_streaming"
                 android:layout_width="0dp"
                 android:layout_height="130dp"
-                android:layout_weight="1"
                 android:layout_marginStart="8dp"
+                android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
@@ -187,7 +188,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Streaming"
+                        android:text="@string/streaming"
                         android:textColor="@color/primary_color"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -196,7 +197,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Videocam"
+                        android:text="@string/videocam"
                         android:textColor="@color/secondary_text"
                         android:textSize="12sp" />
 
@@ -206,7 +207,7 @@
 
         </LinearLayout>
 
-        <!-- Quiz Card (thay thế View History) -->
+        <!-- Quiz Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_quiz"
             android:layout_width="match_parent"
@@ -243,7 +244,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="4dp"
-                        android:text="Quiz"
+                        android:text="@string/quiz"
                         android:textColor="@color/primary_text"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -251,7 +252,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Review learned word"
+                        android:text="@string/quiz_review"
                         android:textColor="@color/secondary_text"
                         android:textSize="14sp" />
 
@@ -312,7 +313,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Import your image"
+                        android:text="@string/import_your_image"
                         android:textColor="@color/secondary_text"
                         android:textSize="14sp" />
 

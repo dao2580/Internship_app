@@ -17,9 +17,11 @@ public class LearningProgressFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View v = inflater.inflate(R.layout.fragment_learning_progress, container, false);
 
         TabLayout tabLayout = v.findViewById(R.id.tab_layout);
@@ -31,18 +33,22 @@ public class LearningProgressFragment extends Fragment {
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
                 case 0:
-                    tab.setText("Lịch sử");
+                    tab.setText(R.string.history);
                     break;
                 case 1:
-                    tab.setText("My Words");
+                    tab.setText(R.string.my_words);
                     break;
                 case 2:
-                    tab.setText("Quiz");
+                    tab.setText(R.string.quiz);
+                    break;
+                default:
+                    tab.setText("");
                     break;
             }
         }).attach();
 
         int selectedTab = 0;
+
         if (getArguments() != null) {
             selectedTab = getArguments().getInt("selected_tab", 0);
         }

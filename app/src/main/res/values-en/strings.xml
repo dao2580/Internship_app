@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="app_name">CamStudy</string>
+
+    <string name="title_home">Home</string>
+    <string name="title_camera">Camera</string>
+    <string name="title_history">Learning</string>
+    <string name="title_settings">Settings</string>
+
+    <string name="home">Home</string>
+    <string name="camera">Camera</string>
+    <string name="learning">Learning</string>
+    <string name="history">History</string>
+    <string name="my_words">My Words</string>
+    <string name="quiz">Quiz</string>
+    <string name="settings">Settings</string>
+
+    <string name="welcome_back">Welcome back!</string>
+    <string name="welcome_subtitle">Learn with your camera!</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="take_photo_desc">Take a photo to detect objects</string>
+    <string name="view_history">View History</string>
+    <string name="view_history_desc">Review your learned words</string>
+    <string name="photo_history">History</string>
+
+    <string name="quick_actions">Quick Actions</string>
+    <string name="one_shot">One-Shot</string>
+    <string name="take_photo_detect">Take a photo &amp; Detect</string>
+    <string name="streaming">Streaming</string>
+    <string name="videocam">Videocam</string>
+    <string name="quiz_review">Review learned words</string>
+    <string name="import_your_image">Import your image</string>
+
+    <string name="camera_permission_required">Camera permission is required</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="capture">Capture</string>
+    <string name="switch_camera">Switch Camera</string>
+    <string name="gallery">Gallery</string>
+
+    <string name="login">Login</string>
+    <string name="login_subtitle">Login to continue learning with your camera.</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign in</string>
+    <string name="register">Register</string>
+    <string name="full_name">Full Name</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="back_to_login">Back to Login</string>
+    <string name="create_account">Create account</string>
+    <string name="create_new_account">Create new account</string>
+    <string name="register_subtitle">Register to save your words, quiz history and progress.</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="forgot_password_subtitle">Enter your email to reset your password.</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="send_reset_link">Send reset link</string>
+
+    <string name="tex1">Welcome to</string>
+    <string name="tex2"> CamStudy</string>
+    <string name="tex3">Explore the world through your camera</string>
+    <string name="start">Start</string>
+
+    <string name="flash_icon">Flash icon</string>
+    <string name="delete_icon">Delete icon</string>
+    <string name="logout_icon">Logout icon</string>
+    <string name="dark_mode_icon">Dark mode icon</string>
+
+    <string name="back_button">Back</string>
+    <string name="back">← Back</string>
+    <string name="zoomed_photo">Zoomed photo</string>
+
+    <string name="analyzing_image">Analyzing image...</string>
+    <string name="back_to_camera">Back to Camera</string>
+    <string name="no_objects_detected">No objects detected</string>
+    <string name="object_detection_unavailable">Object detection not available</string>
+    <string name="detection_failed">Detection failed</string>
+    <string name="import_image">Import Image</string>
+    <string name="save_photo">Save Photo</string>
+    <string name="proceed_to_translation">Proceed to Translation</string>
+
+    <string name="no_objects_placeholder">No objects detected. Using placeholder:</string>
+    <string name="placeholder_car">Car</string>
+    <string name="detected_single_object">Detected object:</string>
+    <string name="detected_multiple_objects">Multiple objects detected. Select one:</string>
+    <string name="enter_word_to_translate">Please enter a word to translate</string>
+    <string name="select_detected_word">Select detected word</string>
+    <string name="source_text_english">Source Text: </string>
+    <string name="translation">Translation</string>
+    <string name="translate">Translate</string>
+    <string name="translation_tips">ℹ️ Translation Tips</string>
+    <string name="translation_tips_content">• Translations can be shown in multiple languages\n• Real-time translation can be added with a translation API\n• Single words work best for object detection</string>
+
+    <string name="camera_icon">Camera Icon</string>
+    <string name="_1_0x">1.0x</string>
+    <string name="_2_0x">2.0x</string>
+    <string name="camera_controls">Camera Controls</string>
+    <string name="flash_button">Flash Button</string>
+
+    <string name="learning_progress">Learning Progress</string>
+    <string name="words_learned">Learned words</string>
+    <string name="empty_history">No history yet</string>
+    <string name="empty_my_words">No favorite words yet</string>
+    <string name="learned_times">Learned %1$d times</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="update_profile">Update Profile</string>
+    <string name="update_profile_desc">View current profile, change password, change email</string>
+    <string name="manage_privacy">Manage Privacy</string>
+    <string name="manage_privacy_desc">Manage camera permission, gallery permission, clear history</string>
+    <string name="user_preferences">User Preferences</string>
+    <string name="user_preferences_description">Choose app language, translation language, and theme</string>
+    <string name="user_preferences_desc">Set app language, translation language, and theme</string>
+    <string name="feedback">Send Feedback</string>
+    <string name="send_feedback_desc">Send your comments by email</string>
+    <string name="logout">Logout</string>
+    <string name="logout_desc">Sign out of the current account</string>
+    <string name="logout_confirm">Are you sure you want to logout?</string>
+
+    <string name="app_language">App Language</string>
+    <string name="app_language_description">Change the display language for the whole app</string>
+    <string name="default_translation_language">Default Translation Language</string>
+    <string name="default_translation_language_description">Default target language for vocabulary translation</string>
+    <string name="select_theme">Select Theme</string>
+    <string name="theme">Theme</string>
+    <string name="light_mode">Light</string>
+    <string name="dark_mode">Dark</string>
+
+    <string name="profile">Profile</string>
+    <string name="current_profile">Current Profile</string>
+    <string name="view_current_profile">View Current Profile</string>
+    <string name="change_password">Change Password</string>
+    <string name="change_email">Change Email</string>
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="new_email">New Email</string>
+
+    <string name="privacy">Privacy</string>
+    <string name="manage_privacy_title_desc">Manage permissions and clear current history</string>
+    <string name="camera_permission">Camera Permission</string>
+    <string name="manage_camera_permission">Manage Camera Permission</string>
+    <string name="camera_permission_desc">Turn on to grant camera permission</string>
+    <string name="gallery_permission">Gallery Permission</string>
+    <string name="manage_gallery_permission">Manage Gallery Permission</string>
+    <string name="gallery_permission_desc">Turn on to grant gallery permission</string>
+    <string name="clear_history">Clear History</string>
+    <string name="clear_history_desc">Clear all current learning history</string>
+    <string name="clear_history_confirm">Are you sure you want to clear your learning history?</string>
+
+    <string name="ok">OK</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="clear">Clear</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="restart_now">Restart Now</string>
+    <string name="later">Later</string>
+    <string name="restart_required">Restart Required</string>
+    <string name="restart_required_message">The app needs to restart to apply %1$s. Restart now?</string>
+    <string name="restart_manually">Please restart the app manually to apply changes</string>
+
+    <string name="error_enter_email_password">Please enter email and password</string>
+    <string name="error_account_not_found">Account does not exist. Please register!</string>
+    <string name="login_success">Login successful!</string>
+    <string name="wrong_password">Wrong password. Please try again!</string>
+    <string name="email_required">Please enter email</string>
+    <string name="valid_email_required">Please enter a valid email</string>
+    <string name="password_required">Please enter password</string>
+    <string name="password_min_length">Password must be at least 6 characters</string>
+    <string name="confirm_password_required">Please confirm your password</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="email_already_registered">This email is already registered</string>
+    <string name="email_already_registered_login">This email is already registered. Please login.</string>
+    <string name="register_success">Registration successful! Please login</string>
+    <string name="register_failed">Registration failed. Please try again.</string>
+    <string name="email_not_registered">This email is not registered</string>
+    <string name="forgot_password_not_available">Forgot password by email is not available in local data mode yet</string>
+
+    <string name="no_image_selected">No image selected</string>
+    <string name="no_email_app">No email app found</string>
+    <string name="logged_out_success">Logged out successfully</string>
+    <string name="no_account_logged_in">No account logged in</string>
+    <string name="not_available">Not available</string>
+    <string name="password_changed_success">Password changed successfully</string>
+    <string name="current_password_incorrect">Current password is incorrect</string>
+    <string name="email_changed_success">Email changed successfully</string>
+    <string name="cannot_change_email">Cannot change email. Check your password or email availability.</string>
+    <string name="new_email_required">Please enter a new email</string>
+    <string name="new_email_must_be_different">New email must be different from current email</string>
+    <string name="current_password_required">Please enter current password</string>
+    <string name="new_password_required">Please enter new password</string>
+
+    <string name="camera_permission_granted">Camera permission granted</string>
+    <string name="camera_permission_denied">Camera permission denied</string>
+    <string name="gallery_permission_granted">Gallery permission granted</string>
+    <string name="gallery_permission_denied">Gallery permission denied</string>
+    <string name="permission_turn_off_message">To turn this permission off, Android manages it in App Settings. Open settings now?</string>
+    <string name="history_cleared_success">History cleared successfully</string>
+
+    <string name="default_language_updated">Default translation language updated</string>
+
+    <string name="object_detected">Object detected: %1$s</string>
+    <string name="object_detected_none">Object detected: None</string>
+    <string name="source_language_english">Source language: English</string>
+    <string name="target_language">Target language</string>
+    <string name="speak">Speak</string>
+    <string name="go_home">Go Home</string>
+
+    <string name="offline_preparing">Offline: preparing...</string>
+    <string name="offline_checking">Offline: checking...</string>
+    <string name="offline_ready">Offline: ready</string>
+    <string name="offline_retrying">Offline: retrying...</string>
+    <string name="offline_download_error">Offline: download error</string>
+    <string name="offline_no_model">Offline: no model</string>
+    <string name="offline_not_ready">Offline: not ready</string>
+
+    <string name="enter_text_to_translate">Please enter text to translate</string>
+    <string name="model_download_failed">Offline model download failed</string>
+    <string name="language_model_not_downloaded">This language has not been downloaded offline yet</string>
+    <string name="offline_model_not_ready">Offline model is not ready</string>
+    <string name="translation_completed">Translation completed!</string>
+    <string name="translation_completed_speech_unavailable">Translation completed! Speech unavailable.</string>
+    <string name="offline_translation_completed">Offline translation completed!</string>
+    <string name="offline_translation_completed_speech_unavailable">Offline translation completed! Speech unavailable.</string>
+    <string name="offline_translation_failed">Offline translation failed</string>
+    <string name="tts_unavailable">Text-to-Speech unavailable</string>
+    <string name="no_text_to_speak">No text to speak</string>
+
+    <string name="Appdesc">CamStudy is an application with simple object detection. It translates the detected object into other languages to help you learn object names in different languages.</string>
+
+    <string name="user_id">User ID</string>
+    <string name="password_reset_email_sent">Password reset email sent. Please check your inbox.</string>
+    <string name="password_reset_email_failed">Cannot send password reset email.</string>
+    <string name="change_email_after_sync">Change email will be added after Supabase sync is completed.</string>
+</resources>

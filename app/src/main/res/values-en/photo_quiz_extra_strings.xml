@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="no_image_to_save">No image to save</string>
+    <string name="failed_to_load_image">Failed to load image: %1$s</string>
+    <string name="detected_objects_prefix">Detected: %1$s</string>
+    <string name="detect_failed_detail">Detection failed: %1$s</string>
+    <string name="photo_saved_gallery">Photo saved to gallery!</string>
+    <string name="failed_to_save_photo">Failed to save photo: %1$s</string>
+</resources>

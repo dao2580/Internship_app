@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="streaming_hint">Hướng camera vào vật thể...</string>
+    <string name="save_detected_word">Lưu từ</string>
+
+    <string name="streaming_camera_open_failed">Không thể mở camera: %1$s</string>
+    <string name="streaming_detect_error">Detect lỗi: %1$s</string>
+    <string name="streaming_no_object_to_save">Chưa detect được vật thể nào</string>
+    <string name="streaming_saved_words">Đã lưu %1$d từ vào Từ của tôi!</string>
+    <string name="streaming_words_saved_recently">Các từ này đã được lưu gần đây</string>
+    <string name="streaming_camera_permission_required">Bạn cần cấp quyền camera để dùng chế độ streaming</string>
+    <string name="streaming_no_speech_content">Không có nội dung để phát âm</string>
+</resources>

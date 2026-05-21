@@ -25,7 +25,6 @@ public class LoginFragment extends Fragment {
 
     private EditText edtEmail;
     private EditText edtPassword;
-
     private UserDatabase userDatabase;
     private SupabaseAuthService authService;
 
@@ -72,7 +71,7 @@ public class LoginFragment extends Fragment {
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
             Toast.makeText(
                     getContext(),
-                    "Please enter email and password",
+                    R.string.error_enter_email_password,
                     Toast.LENGTH_SHORT
             ).show();
             return;
@@ -85,19 +84,16 @@ public class LoginFragment extends Fragment {
             public void onSuccess(SupabaseSession session) {
                 btnLogin.setEnabled(true);
 
-                // 1. Lưu Supabase session vào SharedPreferences
                 userDatabase.saveSupabaseSession(session);
 
-                // 2. Sau khi login, restore dữ liệu từ Supabase về Room
                 new SyncManager(requireContext()).syncAfterLogin();
 
                 Toast.makeText(
                         getContext(),
-                        "Login success!",
+                        R.string.login_success,
                         Toast.LENGTH_SHORT
                 ).show();
 
-                // 3. Điều hướng vào Home và clear back stack Welcome
                 NavController navController =
                         Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
 
@@ -114,7 +110,7 @@ public class LoginFragment extends Fragment {
 
                 Toast.makeText(
                         getContext(),
-                        message != null ? message : "Login failed",
+                        R.string.wrong_password,
                         Toast.LENGTH_LONG
                 ).show();
             }

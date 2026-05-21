@@ -43,28 +43,24 @@ public class TranslationFragment extends Fragment {
     private static final String ARG_PHOTO_URI = "photo_uri";
     private static final String ARG_USER_INPUT_TEXT = "user_input_text";
 
-    private static final String[][] LANGS = {
-            {"Vietnamese", "vi"},
-            {"English", "en"},
-            {"Chinese", "zh"},
-            {"Japanese", "ja"},
-            {"Korean", "ko"},
-            {"French", "fr"},
-            {"German", "de"},
-            {"Spanish", "es"},
-            {"Thai", "th"},
-            {"Russian", "ru"}
-    };
-
     private final Map<String, String> languageMap = new HashMap<>();
     private final List<String> languageNames = new ArrayList<>();
 
     private ImageView imgPreview;
+    private TextView txtObjectDetected;
+    private TextView txtSourceLanguage;
+    private TextView txtOfflineModelStatus;
 
-    private TextView txtObjectDetected, txtSourceLanguage, txtOfflineModelStatus;
-    private TextInputEditText etSourceText, etTranslatedText;
+    private TextInputEditText etSourceText;
+    private TextInputEditText etTranslatedText;
+
     private AutoCompleteTextView spinnerTargetLanguage;
-    private MaterialButton btnTranslate, btnSpeak, btnBack, btnGoHome;
+
+    private MaterialButton btnTranslate;
+    private MaterialButton btnSpeak;
+    private MaterialButton btnBack;
+    private MaterialButton btnGoHome;
+
     private ProgressBar progressBar;
 
     private String[] detectedObjects;
@@ -74,6 +70,7 @@ public class TranslationFragment extends Fragment {
     private AzureTranslatorService translatorService;
     private TextToSpeech tts;
     private boolean ttsReady = false;
+
     private String currentTargetCode = "vi";
 
     private OfflineTranslatorService offlineTranslatorService;
@@ -89,15 +86,11 @@ public class TranslationFragment extends Fragment {
             userInputText = getArguments().getString(ARG_USER_INPUT_TEXT);
         }
 
-        for (String[] row : LANGS) {
-            languageMap.put(row[0], row[1]);
-            languageNames.add(row[0]);
-        }
-
         translatorService = new AzureTranslatorService();
 
         tts = new TextToSpeech(getContext(), status -> {
-            ttsReady = (status == TextToSpeech.SUCCESS);
+            ttsReady = status == TextToSpeech.SUCCESS;
+
             if (ttsReady) {
                 setTtsLanguage(currentTargetCode);
             }
@@ -106,22 +99,28 @@ public class TranslationFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View v = inflater.inflate(R.layout.fragment_translation, container, false);
 
         imgPreview = v.findViewById(R.id.img_preview_small);
         txtObjectDetected = v.findViewById(R.id.txt_object_detected);
         txtSourceLanguage = v.findViewById(R.id.txt_source_language);
         txtOfflineModelStatus = v.findViewById(R.id.txt_offline_model_status);
+
         etSourceText = v.findViewById(R.id.et_source_text);
         etTranslatedText = v.findViewById(R.id.et_translated_text);
+
         spinnerTargetLanguage = v.findViewById(R.id.spinner_target_language);
+
         btnTranslate = v.findViewById(R.id.btn_translate);
         btnSpeak = v.findViewById(R.id.btn_speak);
         btnGoHome = v.findViewById(R.id.btn_go_home);
         btnBack = v.findViewById(R.id.btn_back);
+
         progressBar = v.findViewById(R.id.progress_bar);
 
         setupLanguageDropdown();
@@ -138,28 +137,29 @@ public class TranslationFragment extends Fragment {
             }
         }
 
-        String first = (detectedObjects != null && detectedObjects.length > 0)
+        String first = detectedObjects != null && detectedObjects.length > 0
                 ? detectedObjects[0]
                 : null;
 
         if (first != null) {
-            txtObjectDetected.setText("Object detected: " + first);
+            txtObjectDetected.setText(getString(R.string.object_detected, first));
             etSourceText.setText(first);
         } else if (userInputText != null && !userInputText.isEmpty()) {
-            txtObjectDetected.setText("Object detected: NONE");
+            txtObjectDetected.setText(R.string.object_detected_none);
             etSourceText.setText(userInputText);
         } else {
-            txtObjectDetected.setText("Object detected: NONE");
+            txtObjectDetected.setText(R.string.object_detected_none);
         }
 
-        txtSourceLanguage.setText("Source language: English");
-        updateOfflineModelStatus("Offline: đang chuẩn bị...");
+        txtSourceLanguage.setText(R.string.source_language_english);
+        updateOfflineModelStatus(getString(R.string.offline_preparing));
 
         btnBack.setOnClickListener(v ->
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment).navigateUp()
         );
 
         btnTranslate.setOnClickListener(v -> translate());
+
         btnSpeak.setOnClickListener(v -> speak(1.0f));
         btnSpeak.setVisibility(View.GONE);
 
@@ -168,9 +168,61 @@ public class TranslationFragment extends Fragment {
                     Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
 
             boolean moved = navController.popBackStack(R.id.nav_home, false);
+
             if (!moved) {
                 navController.navigate(R.id.nav_home);
             }
+        });
+    }
+
+    private void setupLanguageDropdown() {
+        languageMap.clear();
+        languageNames.clear();
+
+        boolean vietnameseUi = !"en".equalsIgnoreCase(
+                SettingsPreferences.getAppLanguageCode(requireContext())
+        );
+
+        String[] displayNames = vietnameseUi
+                ? SettingsPreferences.LANGUAGE_NAMES_VI
+                : SettingsPreferences.LANGUAGE_NAMES_EN;
+
+        for (int i = 0; i < SettingsPreferences.LANGUAGE_CODES.length; i++) {
+            String name = displayNames[i];
+            String code = SettingsPreferences.LANGUAGE_CODES[i];
+
+            languageNames.add(name);
+            languageMap.put(name, code);
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                languageNames
+        );
+
+        spinnerTargetLanguage.setAdapter(adapter);
+
+        String defaultCode = SettingsPreferences.getDefaultLanguageCode(requireContext());
+        String defaultName = SettingsPreferences.getLanguageNameFromCode(defaultCode, vietnameseUi);
+
+        spinnerTargetLanguage.setText(defaultName, false);
+
+        currentTargetCode = defaultCode;
+        prepareOfflineTranslator(currentTargetCode);
+
+        spinnerTargetLanguage.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedName = languageNames.get(position);
+            String selectedCode = languageMap.get(selectedName);
+
+            if (selectedCode == null) {
+                selectedCode = "vi";
+            }
+
+            currentTargetCode = selectedCode;
+
+            setTtsLanguage(currentTargetCode);
+            prepareOfflineTranslator(currentTargetCode);
         });
     }
 
@@ -187,7 +239,7 @@ public class TranslationFragment extends Fragment {
         }
 
         isOfflineModelReady = false;
-        updateOfflineModelStatus("Offline: đang kiểm tra...");
+        updateOfflineModelStatus(getString(R.string.offline_checking));
 
         offlineTranslatorService = new OfflineTranslatorService("en", targetCode);
 
@@ -195,51 +247,28 @@ public class TranslationFragment extends Fragment {
             @Override
             public void onSuccess() {
                 isOfflineModelReady = true;
-                updateOfflineModelStatus("Offline: đã sẵn sàng");
+                updateOfflineModelStatus(getString(R.string.offline_ready));
             }
 
             @Override
             public void onFailure(Exception e) {
                 if (!isRetry) {
-                    updateOfflineModelStatus("Offline: đang thử lại...");
+                    updateOfflineModelStatus(getString(R.string.offline_retrying));
                     runOnUi(() -> prepareOfflineTranslator(targetCode, true));
                 } else {
                     isOfflineModelReady = false;
 
                     if (NetworkUtils.isInternetAvailable(requireContext())) {
-                        updateOfflineModelStatus("Offline: tải lỗi");
-                        toast("Tải model offline thất bại");
+                        updateOfflineModelStatus(getString(R.string.offline_download_error));
+                        toast(getString(R.string.model_download_failed));
                     } else {
-                        updateOfflineModelStatus("Offline: chưa có model");
-                        toast("Ngôn ngữ này chưa được tải offline trước đó");
+                        updateOfflineModelStatus(getString(R.string.offline_no_model));
+                        toast(getString(R.string.language_model_not_downloaded));
                     }
 
                     e.printStackTrace();
                 }
             }
-        });
-    }
-
-    private void setupLanguageDropdown() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_dropdown_item_1line,
-                languageNames
-        );
-
-        spinnerTargetLanguage.setAdapter(adapter);
-
-        String defaultCode = SettingsPreferences.getDefaultLanguageCode(requireContext());
-        String defaultName = SettingsPreferences.getLanguageNameFromCode(defaultCode);
-
-        spinnerTargetLanguage.setText(defaultName, false);
-        currentTargetCode = defaultCode;
-        prepareOfflineTranslator(currentTargetCode);
-
-        spinnerTargetLanguage.setOnItemClickListener((parent, view, position, id) -> {
-            currentTargetCode = languageMap.get(languageNames.get(position));
-            setTtsLanguage(currentTargetCode);
-            prepareOfflineTranslator(currentTargetCode);
         });
     }
 
@@ -255,13 +284,16 @@ public class TranslationFragment extends Fragment {
         if (progressBar != null) {
             progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         }
+
         if (btnTranslate != null) {
             btnTranslate.setEnabled(!loading);
         }
     }
 
     private int setTtsLanguage(String code) {
-        if (!ttsReady || tts == null) return TextToSpeech.ERROR;
+        if (!ttsReady || tts == null) {
+            return TextToSpeech.ERROR;
+        }
 
         try {
             Locale locale = Locale.forLanguageTag(code);
@@ -280,8 +312,9 @@ public class TranslationFragment extends Fragment {
 
     private void translate() {
         String src = safeText(etSourceText);
+
         if (src.isEmpty()) {
-            toast("Please enter text to translate");
+            toast(getString(R.string.enter_text_to_translate));
             return;
         }
 
@@ -289,55 +322,41 @@ public class TranslationFragment extends Fragment {
         setLoading(true);
 
         if (NetworkUtils.isInternetAvailable(requireContext())) {
-            translatorService.translate(src, currentTargetCode,
-                    new AzureTranslatorService.TranslationCallback() {
-                        @Override
-                        public void onSuccess(String out) {
-                            runOnUi(() -> {
-                                if (!isAdded() || getView() == null) {
-                                    return;
-                                }
-
-                                etTranslatedText.setText(out);
-                                setLoading(false);
-
-                                btnSpeak.setVisibility(View.VISIBLE);
-
-                                if (!ttsReady) {
-                                    btnSpeak.setEnabled(false);
-                                    toast("Translation completed! (Speech unavailable)");
-                                } else {
-                                    btnSpeak.setEnabled(true);
-                                    toast("Translation completed!");
-                                }
-
-                                String userEmail = new UserDatabase(getContext()).getLoggedInEmail();
-                                if (userEmail != null) {
-                                    String sourceText = safeText(etSourceText);
-                                    String vi = VocabMap.getVI(sourceText.toLowerCase());
-
-                                    new AppRepository(getContext()).saveLearnedWord(
-                                            userEmail,
-                                            sourceText,
-                                            vi,
-                                            out,
-                                            currentTargetCode,
-                                            "manual"
-                                    );
-                                }
-                            });
+            translatorService.translate(src, currentTargetCode, new AzureTranslatorService.TranslationCallback() {
+                @Override
+                public void onSuccess(String out) {
+                    runOnUi(() -> {
+                        if (!isAdded() || getView() == null) {
+                            return;
                         }
 
-                        @Override
-                        public void onError(String err) {
-                            runOnUi(() -> {
-                                if (!isAdded() || getView() == null) {
-                                    return;
-                                }
-                                translateOffline(src);
-                            });
+                        etTranslatedText.setText(out);
+                        setLoading(false);
+                        btnSpeak.setVisibility(View.VISIBLE);
+
+                        if (!ttsReady) {
+                            btnSpeak.setEnabled(false);
+                            toast(getString(R.string.translation_completed_speech_unavailable));
+                        } else {
+                            btnSpeak.setEnabled(true);
+                            toast(getString(R.string.translation_completed));
                         }
+
+                        saveLearnedWord(out, "manual");
                     });
+                }
+
+                @Override
+                public void onError(String err) {
+                    runOnUi(() -> {
+                        if (!isAdded() || getView() == null) {
+                            return;
+                        }
+
+                        translateOffline(src);
+                    });
+                }
+            });
         } else {
             translateOffline(src);
         }
@@ -350,8 +369,8 @@ public class TranslationFragment extends Fragment {
 
         if (!isOfflineModelReady) {
             setLoading(false);
-            updateOfflineModelStatus("Offline: chưa sẵn sàng");
-            toast("Offline model chưa sẵn sàng");
+            updateOfflineModelStatus(getString(R.string.offline_not_ready));
+            toast(getString(R.string.offline_model_not_ready));
             etTranslatedText.setText("");
             return;
         }
@@ -366,31 +385,17 @@ public class TranslationFragment extends Fragment {
 
                     etTranslatedText.setText(translated);
                     setLoading(false);
-
                     btnSpeak.setVisibility(View.VISIBLE);
 
                     if (!ttsReady) {
                         btnSpeak.setEnabled(false);
-                        toast("Offline translation completed! (Speech unavailable)");
+                        toast(getString(R.string.offline_translation_completed_speech_unavailable));
                     } else {
                         btnSpeak.setEnabled(true);
-                        toast("Offline translation completed!");
+                        toast(getString(R.string.offline_translation_completed));
                     }
 
-                    String userEmail = new UserDatabase(getContext()).getLoggedInEmail();
-                    if (userEmail != null) {
-                        String sourceText = safeText(etSourceText);
-                        String vi = VocabMap.getVI(sourceText.toLowerCase());
-
-                        new AppRepository(getContext()).saveLearnedWord(
-                                userEmail,
-                                sourceText,
-                                vi,
-                                translated,
-                                currentTargetCode,
-                                "manual"
-                        );
-                    }
+                    saveLearnedWord(translated, "manual");
                 });
             }
 
@@ -402,10 +407,30 @@ public class TranslationFragment extends Fragment {
                     }
 
                     setLoading(false);
-                    toast("Offline translation failed");
+                    toast(getString(R.string.offline_translation_failed));
                 });
             }
         });
+    }
+
+    private void saveLearnedWord(String translatedText, String mode) {
+        String userEmail = new UserDatabase(getContext()).getLoggedInEmail();
+
+        if (userEmail == null) {
+            return;
+        }
+
+        String sourceText = safeText(etSourceText);
+        String vi = VocabMap.getVI(sourceText.toLowerCase());
+
+        new AppRepository(getContext()).saveLearnedWord(
+                userEmail,
+                sourceText,
+                vi,
+                translatedText,
+                currentTargetCode,
+                mode
+        );
     }
 
     private void setTTSforCurrentTarget() {
@@ -414,13 +439,14 @@ public class TranslationFragment extends Fragment {
 
     private void speak(float speed) {
         if (!ttsReady || tts == null) {
-            toast("Text-to-Speech unavailable");
+            toast(getString(R.string.tts_unavailable));
             return;
         }
 
         String text = safeText(etTranslatedText);
+
         if (text.isEmpty()) {
-            toast("No text to speak");
+            toast(getString(R.string.no_text_to_speak));
             return;
         }
 
@@ -433,15 +459,15 @@ public class TranslationFragment extends Fragment {
         return et.getText() == null ? "" : et.getText().toString().trim();
     }
 
-    private void toast(String s) {
+    private void toast(String message) {
         if (isAdded() && getContext() != null) {
-            Toast.makeText(getContext(), s, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void runOnUi(Runnable r) {
+    private void runOnUi(Runnable runnable) {
         if (getActivity() != null && isAdded()) {
-            getActivity().runOnUiThread(r);
+            getActivity().runOnUiThread(runnable);
         }
     }
 

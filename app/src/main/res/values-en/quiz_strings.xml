@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="quiz_total_score_zero">Total quiz: Correct 0 | Wrong 0</string>
+    <string name="quiz_total_score_format">Total quiz: Correct %1$d | Wrong %2$d</string>
+
+    <string name="quiz_question_count">Number of questions</string>
+    <string name="quiz_analyzing_data">Analyzing quiz data...</string>
+    <string name="start_quiz">Start Quiz</string>
+    <string name="quiz_start_hint">Choose a language, then tap Start Quiz</string>
+    <string name="quiz_question_number_sample">Question 1/10</string>
+    <string name="quiz_question_number_format">Question %1$d/%2$d</string>
+
+    <string name="question_type">Question type</string>
+    <string name="listen_again">Listen again</string>
+    <string name="type_answer_hint">Enter your answer</string>
+    <string name="submit_answer">Submit answer</string>
+
+    <string name="last_quiz_review">Last quiz attempt</string>
+    <string name="no_quiz_session">No quiz attempts yet.</string>
+    <string name="recent_quiz_sessions">Recent quiz attempts</string>
+    <string name="no_data">No data yet.</string>
+    <string name="recent_wrong_questions">Recent wrong answers</string>
+    <string name="speak_correct_answer">Speak correct answer</string>
+
+    <string name="quiz_no_audio">No audio</string>
+    <string name="quiz_tts_starting">TTS is starting. Tap again</string>
+    <string name="quiz_tts_reset">TTS has reset. Tap again</string>
+
+    <string name="quiz_not_logged_in">Please log in first</string>
+    <string name="quiz_not_logged_in_short">Not logged in.</string>
+    <string name="quiz_no_data_to_generate">No data to generate quiz.</string>
+    <string name="quiz_not_enough_data">Not enough data to generate a quiz for this language.</string>
+    <string name="quiz_enter_answer">Please enter your answer</string>
+
+    <string name="quiz_source_starter_priority">Starter Pack priority</string>
+    <string name="quiz_source_mixed">Mixed</string>
+    <string name="quiz_source_my_words_priority">My Words priority</string>
+    <string name="quiz_source_format">Quiz source: %1$s | Learned: %2$d | Starter: %3$d</string>
+
+    <string name="quiz_correct_label">Correct</string>
+    <string name="quiz_wrong_label">Wrong</string>
+    <string name="quiz_language_label">Language</string>
+    <string name="quiz_source_label">Source</string>
+    <string name="quiz_wrong_questions_label">Wrong questions</string>
+    <string name="quiz_no_wrong_questions">No wrong answers.</string>
+    <string name="quiz_finished_summary">Completed! Correct %1$d/%2$d | Wrong %3$d</string>
+
+    <string name="quiz_user_answer_prefix">Your answer: %1$s</string>
+    <string name="quiz_correct_answer_prefix">Correct: %1$s</string>
+
+    <string name="quiz_question_en_to_target">What does \'%1$s\' mean in the selected language?</string>
+    <string name="quiz_question_target_to_en">What is \'%1$s\' in English?</string>
+    <string name="quiz_question_type_en">Type the English word for: %1$s</string>
+    <string name="quiz_question_true_false">True or False:\n\'%1$s\' = \'%2$s\'</string>
+    <string name="quiz_question_unscramble">Unscramble the English word for \'%1$s\': %2$s</string>
+    <string name="quiz_question_audio">Listen and choose the correct English word</string>
+
+    <string name="quiz_true">True</string>
+    <string name="quiz_false">False</string>
+</resources>

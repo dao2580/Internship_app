@@ -26,7 +26,6 @@ public class RegisterFragment extends Fragment {
     private EditText edtEmail;
     private EditText edtPassword;
     private EditText edtConfirmPassword;
-
     private UserDatabase userDatabase;
     private SupabaseAuthService authService;
 
@@ -72,37 +71,37 @@ public class RegisterFragment extends Fragment {
         String confirmPassword = edtConfirmPassword.getText().toString().trim();
 
         if (TextUtils.isEmpty(email)) {
-            edtEmail.setError("Email is required");
+            edtEmail.setError(getString(R.string.email_required));
             edtEmail.requestFocus();
             return;
         }
 
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            edtEmail.setError("Please enter a valid email");
+            edtEmail.setError(getString(R.string.valid_email_required));
             edtEmail.requestFocus();
             return;
         }
 
         if (TextUtils.isEmpty(password)) {
-            edtPassword.setError("Password is required");
+            edtPassword.setError(getString(R.string.password_required));
             edtPassword.requestFocus();
             return;
         }
 
         if (password.length() < 6) {
-            edtPassword.setError("Password must be at least 6 characters");
+            edtPassword.setError(getString(R.string.password_min_length));
             edtPassword.requestFocus();
             return;
         }
 
         if (TextUtils.isEmpty(confirmPassword)) {
-            edtConfirmPassword.setError("Please confirm your password");
+            edtConfirmPassword.setError(getString(R.string.confirm_password_required));
             edtConfirmPassword.requestFocus();
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            edtConfirmPassword.setError("Passwords do not match");
+            edtConfirmPassword.setError(getString(R.string.passwords_do_not_match));
             edtConfirmPassword.requestFocus();
             return;
         }
@@ -114,19 +113,16 @@ public class RegisterFragment extends Fragment {
             public void onSuccess(SupabaseSession session) {
                 btnRegister.setEnabled(true);
 
-                // 1. Lưu session Supabase
                 userDatabase.saveSupabaseSession(session);
 
-                // 2. Sau khi register/login thành công, restore/sync dữ liệu
                 new SyncManager(requireContext()).syncAfterLogin();
 
                 Toast.makeText(
                         getContext(),
-                        "Registration successful!",
+                        R.string.register_success,
                         Toast.LENGTH_SHORT
                 ).show();
 
-                // 3. Vào Home luôn
                 NavController navController =
                         Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
 
@@ -143,7 +139,7 @@ public class RegisterFragment extends Fragment {
 
                 Toast.makeText(
                         getContext(),
-                        message != null ? message : "Registration failed",
+                        R.string.register_failed,
                         Toast.LENGTH_LONG
                 ).show();
             }

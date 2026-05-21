@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,6 +31,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -81,8 +83,14 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         final List<String> options;
         final String audioText;
 
-        QuizQuestion(QuestionType type, QuizWord quizWord, String prompt,
-                     String correctAnswer, List<String> options, String audioText) {
+        QuizQuestion(
+                QuestionType type,
+                QuizWord quizWord,
+                String prompt,
+                String correctAnswer,
+                List<String> options,
+                String audioText
+        ) {
             this.type = type;
             this.quizWord = quizWord;
             this.prompt = prompt;
@@ -92,37 +100,37 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         }
     }
 
-    private static final String[][] LANGS = {
-            {"Vietnamese", "vi"},
-            {"English", "en"},
-            {"Chinese", "zh"},
-            {"Japanese", "ja"},
-            {"Korean", "ko"},
-            {"French", "fr"},
-            {"German", "de"},
-            {"Spanish", "es"},
-            {"Thai", "th"},
-            {"Russian", "ru"}
-    };
+    private TextView txtScore;
+    private TextView txtQuestion;
+    private TextView txtQNumber;
+    private TextView txtEmpty;
+    private TextView txtQuestionType;
+    private TextView txtQuizSourceHint;
+    private TextView txtLastQuizReview;
+    private TextView txtRecentSessions;
 
-    private TextView txtScore, txtQuestion, txtQNumber, txtEmpty, txtQuestionType;
-    private TextView txtQuizSourceHint, txtLastQuizReview, txtRecentSessions;
-
-    private MaterialButton btnGenerate, btnA, btnB, btnC, btnD;
-    private MaterialButton btnSubmitText, btnPlayAudio;
+    private MaterialButton btnGenerate;
+    private MaterialButton btnA;
+    private MaterialButton btnB;
+    private MaterialButton btnC;
+    private MaterialButton btnD;
+    private MaterialButton btnSubmitText;
+    private MaterialButton btnPlayAudio;
 
     private View cardQuiz;
     private ProgressBar progressBar;
-    private AutoCompleteTextView spinnerQuizLanguage, spinnerQuizCount;
+
+    private AutoCompleteTextView spinnerQuizLanguage;
+    private AutoCompleteTextView spinnerQuizCount;
+
     private TextInputLayout tilTypeAnswer;
     private TextInputEditText etTypeAnswer;
 
     private RecyclerView recyclerRecentWrongs;
     private QuizWrongReviewAdapter wrongReviewAdapter;
 
-    private final LinkedHashMap<String, String> languageMap = new LinkedHashMap<>();
+    private final Map<String, String> languageMap = new LinkedHashMap<>();
     private final List<String> languageNames = new ArrayList<>();
-
     private final List<QuizQuestion> questions = new ArrayList<>();
     private final List<QuizResultEntity> currentWrongResults = new ArrayList<>();
 
@@ -133,7 +141,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
     private int questionCount = 10;
 
     private String currentTargetCode = "vi";
-    private String currentSourceMode = "Starter Pack";
+    private String currentSourceMode = "";
     private String currentSessionId = "";
 
     private AppRepository repository;
@@ -144,9 +152,11 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View v = inflater.inflate(R.layout.fragment_tab_quiz, container, false);
 
         repository = new AppRepository(requireContext());
@@ -170,13 +180,16 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
         cardQuiz = v.findViewById(R.id.card_quiz);
         progressBar = v.findViewById(R.id.progress_quiz);
+
         spinnerQuizLanguage = v.findViewById(R.id.spinner_quiz_language);
         spinnerQuizCount = v.findViewById(R.id.spinner_quiz_count);
+
         tilTypeAnswer = v.findViewById(R.id.til_type_answer);
         etTypeAnswer = v.findViewById(R.id.et_type_answer);
 
         recyclerRecentWrongs = v.findViewById(R.id.recycler_recent_wrongs);
         recyclerRecentWrongs.setLayoutManager(new LinearLayoutManager(getContext()));
+
         wrongReviewAdapter = new QuizWrongReviewAdapter(this);
         recyclerRecentWrongs.setAdapter(wrongReviewAdapter);
 
@@ -192,9 +205,23 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
     }
 
     private void setupDropdowns() {
-        for (String[] row : LANGS) {
-            languageMap.put(row[0], row[1]);
-            languageNames.add(row[0]);
+        languageMap.clear();
+        languageNames.clear();
+
+        boolean vietnameseUi = !"en".equalsIgnoreCase(
+                SettingsPreferences.getAppLanguageCode(requireContext())
+        );
+
+        String[] displayNames = vietnameseUi
+                ? SettingsPreferences.LANGUAGE_NAMES_VI
+                : SettingsPreferences.LANGUAGE_NAMES_EN;
+
+        for (int i = 0; i < SettingsPreferences.LANGUAGE_CODES.length; i++) {
+            String name = displayNames[i];
+            String code = SettingsPreferences.LANGUAGE_CODES[i];
+
+            languageMap.put(name, code);
+            languageNames.add(name);
         }
 
         ArrayAdapter<String> langAdapter = new ArrayAdapter<>(
@@ -202,9 +229,14 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                 android.R.layout.simple_dropdown_item_1line,
                 languageNames
         );
+
         spinnerQuizLanguage.setAdapter(langAdapter);
-        spinnerQuizLanguage.setText("Vietnamese", false);
-        currentTargetCode = "vi";
+
+        String defaultCode = SettingsPreferences.getDefaultLanguageCode(requireContext());
+        String defaultName = SettingsPreferences.getLanguageNameFromCode(defaultCode, vietnameseUi);
+
+        spinnerQuizLanguage.setText(defaultName, false);
+        currentTargetCode = defaultCode;
 
         List<String> counts = new ArrayList<>();
         counts.add("10");
@@ -216,6 +248,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                 android.R.layout.simple_dropdown_item_1line,
                 counts
         );
+
         spinnerQuizCount.setAdapter(countAdapter);
         spinnerQuizCount.setText("10", false);
         questionCount = 10;
@@ -223,6 +256,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         spinnerQuizLanguage.setOnItemClickListener((parent, view, position, id) -> {
             String name = languageNames.get(position);
             String code = languageMap.get(name);
+
             if (code != null) {
                 currentTargetCode = code;
                 refreshSourceHint();
@@ -240,9 +274,10 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
     private void setupTts() {
         releaseTts();
-        tts = new TextToSpeech(requireContext(), status -> {
-            ttsReady = (status == TextToSpeech.SUCCESS);
-        });
+
+        tts = new TextToSpeech(requireContext(), status ->
+                ttsReady = status == TextToSpeech.SUCCESS
+        );
     }
 
     private void releaseTts() {
@@ -253,19 +288,20 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
             } catch (Exception ignored) {
             }
         }
+
         tts = null;
         ttsReady = false;
     }
 
     private void speakText(String text, String langCode) {
         if (text == null || text.trim().isEmpty()) {
-            toast("Không có audio");
+            toast(getString(R.string.quiz_no_audio));
             return;
         }
 
         if (tts == null || !ttsReady) {
             setupTts();
-            toast("TTS đang khởi động, bấm lại");
+            toast(getString(R.string.quiz_tts_starting));
             return;
         }
 
@@ -283,7 +319,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "QUIZ_AUDIO");
         } catch (Exception e) {
             setupTts();
-            toast("TTS vừa reset, bấm lại");
+            toast(getString(R.string.quiz_tts_reset));
         }
     }
 
@@ -294,11 +330,15 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
     }
 
     private String getSpeechLanguageForWrongItem(QuizResultEntity item) {
-        if (item == null || item.questionType == null) return "en";
+        if (item == null || item.questionType == null) {
+            return "en";
+        }
 
         switch (item.questionType) {
             case "MCQ_EN_TO_TARGET":
-                return item.targetLang != null && !item.targetLang.isEmpty() ? item.targetLang : "vi";
+                return item.targetLang != null && !item.targetLang.isEmpty()
+                        ? item.targetLang
+                        : "vi";
             case "TRUE_FALSE":
                 return "en";
             case "MCQ_TARGET_TO_EN":
@@ -312,88 +352,106 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
     private void loadScore() {
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
-        if (email == null) return;
 
-        repository.getQuizStats(email, stats ->
-                requireActivity().runOnUiThread(() -> {
-                    int correct = stats[0];
-                    int total = stats[1];
-                    int wrong = total - correct;
-                    txtScore.setText("Tổng quiz: Đúng " + correct + " | Sai " + wrong);
-                })
-        );
+        if (email == null) {
+            return;
+        }
+
+        repository.getQuizStats(email, stats -> requireActivity().runOnUiThread(() -> {
+            int correct = stats[0];
+            int total = stats[1];
+            int wrong = total - correct;
+
+            txtScore.setText(getString(R.string.quiz_total_score_format, correct, wrong));
+        }));
     }
 
     private void observeReviewPanels() {
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
-        if (email == null) return;
+
+        if (email == null) {
+            return;
+        }
 
         repository.getRecentQuizSessionsLive(email).observe(getViewLifecycleOwner(), sessions -> {
             if (sessions == null || sessions.isEmpty()) {
-                txtRecentSessions.setText("Chưa có dữ liệu.");
+                txtRecentSessions.setText(R.string.no_data);
                 return;
             }
 
             StringBuilder sb = new StringBuilder();
             SimpleDateFormat df = new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
+
             int limit = Math.min(sessions.size(), 5);
 
             for (int i = 0; i < limit; i++) {
-                QuizSessionEntity s = sessions.get(i);
-                int wrong = s.totalQuestions - s.correctAnswers;
+                QuizSessionEntity session = sessions.get(i);
+                int wrong = session.totalQuestions - session.correctAnswers;
 
-                if (i > 0) sb.append("\n\n");
+                if (i > 0) {
+                    sb.append("\n\n");
+                }
+
                 sb.append("• ")
-                        .append(df.format(new Date(s.createdAt)))
+                        .append(df.format(new Date(session.createdAt)))
                         .append(" | ")
-                        .append(s.targetLang)
+                        .append(session.targetLang)
                         .append(" | ")
-                        .append(s.sourceMode)
+                        .append(session.sourceMode)
                         .append("\n")
-                        .append("Đúng: ")
-                        .append(s.correctAnswers)
-                        .append(" | Sai: ")
+                        .append(getString(R.string.quiz_correct_label))
+                        .append(": ")
+                        .append(session.correctAnswers)
+                        .append(" | ")
+                        .append(getString(R.string.quiz_wrong_label))
+                        .append(": ")
                         .append(wrong);
             }
 
             txtRecentSessions.setText(sb.toString());
         });
 
-        repository.getRecentWrongQuizResultsLive(email).observe(getViewLifecycleOwner(), wrongs -> {
-            wrongReviewAdapter.submitList(wrongs);
-        });
+        repository.getRecentWrongQuizResultsLive(email).observe(
+                getViewLifecycleOwner(),
+                wrongs -> wrongReviewAdapter.submitList(wrongs)
+        );
     }
 
     private void refreshSourceHint() {
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
+
         if (email == null) {
-            txtQuizSourceHint.setText("Chưa đăng nhập.");
+            txtQuizSourceHint.setText(R.string.quiz_not_logged_in_short);
             return;
         }
 
-        txtQuizSourceHint.setText("Đang phân tích dữ liệu quiz...");
+        txtQuizSourceHint.setText(R.string.quiz_analyzing_data);
 
         repository.getAllWords(email, words -> {
             int learnedCount = 0;
-            for (LearnedWordEntity w : words) {
-                if (isSameLang(w.targetLang, currentTargetCode)) {
+
+            for (LearnedWordEntity word : words) {
+                if (isSameLang(word.targetLang, currentTargetCode)) {
                     learnedCount++;
                 }
             }
 
             if (learnedCount < 5) {
-                currentSourceMode = "Starter Pack ưu tiên";
+                currentSourceMode = getString(R.string.quiz_source_starter_priority);
             } else if (learnedCount < 15) {
-                currentSourceMode = "Mixed";
+                currentSourceMode = getString(R.string.quiz_source_mixed);
             } else {
-                currentSourceMode = "My Words ưu tiên";
+                currentSourceMode = getString(R.string.quiz_source_my_words_priority);
             }
 
             int starterCount = QuizStarterBank.getWords(currentTargetCode).size();
 
-            String sourceText = "Nguồn quiz: " + currentSourceMode +
-                    " | Learned: " + learnedCount +
-                    " | Starter: " + starterCount;
+            String sourceText = getString(
+                    R.string.quiz_source_format,
+                    currentSourceMode,
+                    learnedCount,
+                    starterCount
+            );
 
             requireActivity().runOnUiThread(() -> txtQuizSourceHint.setText(sourceText));
         });
@@ -401,8 +459,9 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
     private void generateQuiz() {
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
+
         if (email == null) {
-            toast("Bạn cần đăng nhập trước");
+            toast(getString(R.string.quiz_not_logged_in));
             return;
         }
 
@@ -419,18 +478,18 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                 requireActivity().runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     btnGenerate.setEnabled(true);
-                    txtEmpty.setText("Không có dữ liệu để tạo quiz.");
+                    txtEmpty.setText(R.string.quiz_no_data_to_generate);
                     txtEmpty.setVisibility(View.VISIBLE);
                 });
                 return;
             }
 
             if (learnedWords.size() < 5) {
-                currentSourceMode = "Starter Pack ưu tiên";
+                currentSourceMode = getString(R.string.quiz_source_starter_priority);
             } else if (learnedWords.size() < 15) {
-                currentSourceMode = "Mixed";
+                currentSourceMode = getString(R.string.quiz_source_mixed);
             } else {
-                currentSourceMode = "My Words ưu tiên";
+                currentSourceMode = getString(R.string.quiz_source_my_words_priority);
             }
 
             List<QuizQuestion> generated = buildQuestions(learnedWords, starterWords, questionCount);
@@ -450,7 +509,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                 currentSessionId = UUID.randomUUID().toString();
 
                 if (questions.isEmpty()) {
-                    txtEmpty.setText("Không đủ dữ liệu để tạo quiz cho ngôn ngữ này.");
+                    txtEmpty.setText(R.string.quiz_not_enough_data);
                     txtEmpty.setVisibility(View.VISIBLE);
                     return;
                 }
@@ -466,10 +525,15 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         List<QuizWord> out = new ArrayList<>();
 
         for (LearnedWordEntity word : words) {
-            if (!isSameLang(word.targetLang, targetLang)) continue;
+            if (!isSameLang(word.targetLang, targetLang)) {
+                continue;
+            }
 
             String translated = safeTranslated(word, targetLang);
-            if (isBlank(word.labelEn) || isBlank(translated)) continue;
+
+            if (isBlank(word.labelEn) || isBlank(translated)) {
+                continue;
+            }
 
             out.add(new QuizWord(
                     word.id,
@@ -500,23 +564,31 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         return out;
     }
 
-    private List<QuizQuestion> buildQuestions(List<QuizWord> learned, List<QuizWord> starter, int desiredCount) {
+    private List<QuizQuestion> buildQuestions(
+            List<QuizWord> learned,
+            List<QuizWord> starter,
+            int desiredCount
+    ) {
         List<QuizQuestion> out = new ArrayList<>();
         List<QuizWord> combined = new ArrayList<>(starter);
+
         mergeUniqueByEnglish(combined, learned);
 
-        if (combined.size() < 4) return out;
+        if (combined.size() < 4) {
+            return out;
+        }
 
         int safety = 0;
+
         while (out.size() < desiredCount && safety < 500) {
             safety++;
 
             QuizWord seed = pickSeed(learned, combined);
             QuestionType type = pickQuestionType(out.size());
+            QuizQuestion question = buildQuestion(seed, combined, type);
 
-            QuizQuestion q = buildQuestion(seed, combined, type);
-            if (q != null) {
-                out.add(q);
+            if (question != null) {
+                out.add(question);
             }
         }
 
@@ -527,6 +599,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         if (!learned.isEmpty() && random.nextFloat() < 0.7f) {
             return learned.get(random.nextInt(learned.size()));
         }
+
         return combined.get(random.nextInt(combined.size()));
     }
 
@@ -539,6 +612,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                 QuestionType.UNSCRAMBLE_EN,
                 QuestionType.AUDIO_TARGET_TO_EN
         };
+
         return types[index % types.length];
     }
 
@@ -547,14 +621,18 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         switch (type) {
             case MCQ_EN_TO_TARGET: {
                 List<String> options = buildWrongTranslatedOptions(pool, seed, 3);
-                if (options.size() < 3) return null;
+
+                if (options.size() < 3) {
+                    return null;
+                }
+
                 options.add(seed.translated);
                 Collections.shuffle(options);
 
                 return new QuizQuestion(
                         type,
                         seed,
-                        "'" + seed.labelEn + "' nghĩa là gì trong ngôn ngữ đã chọn?",
+                        getString(R.string.quiz_question_en_to_target, seed.labelEn),
                         seed.translated,
                         options,
                         null
@@ -563,14 +641,18 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
             case MCQ_TARGET_TO_EN: {
                 List<String> options = buildWrongEnglishOptions(pool, seed, 3);
-                if (options.size() < 3) return null;
+
+                if (options.size() < 3) {
+                    return null;
+                }
+
                 options.add(seed.labelEn);
                 Collections.shuffle(options);
 
                 return new QuizQuestion(
                         type,
                         seed,
-                        "'" + seed.translated + "' trong English là gì?",
+                        getString(R.string.quiz_question_target_to_en, seed.translated),
                         seed.labelEn,
                         options,
                         null
@@ -581,7 +663,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                 return new QuizQuestion(
                         type,
                         seed,
-                        "Gõ từ tiếng Anh của: " + seed.translated,
+                        getString(R.string.quiz_question_type_en, seed.translated),
                         seed.labelEn,
                         new ArrayList<>(),
                         null
@@ -594,17 +676,19 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                         ? seed.translated
                         : pickWrongTranslated(pool, seed);
 
-                if (isBlank(shownMeaning)) return null;
+                if (isBlank(shownMeaning)) {
+                    return null;
+                }
 
                 List<String> options = new ArrayList<>();
-                options.add("True");
-                options.add("False");
+                options.add(getString(R.string.quiz_true));
+                options.add(getString(R.string.quiz_false));
 
                 return new QuizQuestion(
                         type,
                         seed,
-                        "True or False:\n'" + seed.labelEn + "' = '" + shownMeaning + "'",
-                        showCorrectPair ? "True" : "False",
+                        getString(R.string.quiz_question_true_false, seed.labelEn, shownMeaning),
+                        showCorrectPair ? getString(R.string.quiz_true) : getString(R.string.quiz_false),
                         options,
                         null
                 );
@@ -612,6 +696,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
             case UNSCRAMBLE_EN: {
                 String shuffled = shuffleLetters(seed.labelEn);
+
                 if (shuffled.equalsIgnoreCase(seed.labelEn) && seed.labelEn.length() > 1) {
                     shuffled = shuffleLetters(seed.labelEn);
                 }
@@ -619,8 +704,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                 return new QuizQuestion(
                         type,
                         seed,
-                        "Sắp xếp lại chữ cái để tạo từ tiếng Anh của '" +
-                                seed.translated + "': " + shuffled,
+                        getString(R.string.quiz_question_unscramble, seed.translated, shuffled),
                         seed.labelEn,
                         new ArrayList<>(),
                         null
@@ -629,22 +713,27 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
             case AUDIO_TARGET_TO_EN: {
                 List<String> options = buildWrongEnglishOptions(pool, seed, 3);
-                if (options.size() < 3) return null;
+
+                if (options.size() < 3) {
+                    return null;
+                }
+
                 options.add(seed.labelEn);
                 Collections.shuffle(options);
 
                 return new QuizQuestion(
                         type,
                         seed,
-                        "Nghe từ và chọn English đúng",
+                        getString(R.string.quiz_question_audio),
                         seed.labelEn,
                         options,
                         seed.translated
                 );
             }
-        }
 
-        return null;
+            default:
+                return null;
+        }
     }
 
     private void showQuestion() {
@@ -653,12 +742,19 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
             return;
         }
 
-        QuizQuestion q = questions.get(currentIndex);
-        maxPoints += q.type.points;
+        QuizQuestion question = questions.get(currentIndex);
+        maxPoints += question.type.points;
 
-        txtQNumber.setText("Câu " + (currentIndex + 1) + "/" + questions.size());
-        txtQuestionType.setText(q.type.label);
-        txtQuestion.setText(q.prompt);
+        txtQNumber.setText(
+                getString(
+                        R.string.quiz_question_number_format,
+                        currentIndex + 1,
+                        questions.size()
+                )
+        );
+
+        txtQuestionType.setText(question.type.label);
+        txtQuestion.setText(question.prompt);
 
         resetButtons();
 
@@ -671,24 +767,28 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         btnC.setVisibility(View.GONE);
         btnD.setVisibility(View.GONE);
 
-        if (q.type == QuestionType.MCQ_EN_TO_TARGET
-                || q.type == QuestionType.MCQ_TARGET_TO_EN
-                || q.type == QuestionType.AUDIO_TARGET_TO_EN) {
+        if (question.type == QuestionType.MCQ_EN_TO_TARGET
+                || question.type == QuestionType.MCQ_TARGET_TO_EN
+                || question.type == QuestionType.AUDIO_TARGET_TO_EN) {
 
-            if (q.type == QuestionType.AUDIO_TARGET_TO_EN) {
+            if (question.type == QuestionType.AUDIO_TARGET_TO_EN) {
                 btnPlayAudio.setVisibility(View.VISIBLE);
-                btnPlayAudio.setOnClickListener(v -> speakText(q.audioText, currentTargetCode));
+                btnPlayAudio.setOnClickListener(v -> speakText(question.audioText, currentTargetCode));
             }
 
-            showOptions(q.options, q);
-        } else if (q.type == QuestionType.TRUE_FALSE) {
-            List<String> tf = new ArrayList<>();
-            tf.add("True");
-            tf.add("False");
-            showOptions(tf, q);
+            showOptions(question.options, question);
+
+        } else if (question.type == QuestionType.TRUE_FALSE) {
+            List<String> options = new ArrayList<>();
+            options.add(getString(R.string.quiz_true));
+            options.add(getString(R.string.quiz_false));
+
+            showOptions(options, question);
+
         } else {
             tilTypeAnswer.setVisibility(View.VISIBLE);
             btnSubmitText.setVisibility(View.VISIBLE);
+
             etTypeAnswer.setText("");
             etTypeAnswer.setEnabled(true);
             btnSubmitText.setEnabled(true);
@@ -699,47 +799,51 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
                         : etTypeAnswer.getText().toString().trim();
 
                 if (typed.isEmpty()) {
-                    toast("Hãy nhập câu trả lời");
+                    toast(getString(R.string.quiz_enter_answer));
                     return;
                 }
 
-                handleAnswer(typed, q);
+                handleAnswer(typed, question);
             });
         }
     }
 
-    private void showOptions(List<String> options, QuizQuestion q) {
-        MaterialButton[] btns = {btnA, btnB, btnC, btnD};
+    private void showOptions(List<String> options, QuizQuestion question) {
+        MaterialButton[] buttons = {btnA, btnB, btnC, btnD};
 
-        for (int i = 0; i < btns.length; i++) {
-            MaterialButton btn = btns[i];
+        for (int i = 0; i < buttons.length; i++) {
+            MaterialButton button = buttons[i];
+
             if (i < options.size()) {
                 String chosen = options.get(i);
-                btn.setVisibility(View.VISIBLE);
-                btn.setText(chosen);
-                btn.setEnabled(true);
-                btn.setOnClickListener(v -> handleAnswer(chosen, q));
+
+                button.setVisibility(View.VISIBLE);
+                button.setText(chosen);
+                button.setEnabled(true);
+                button.setOnClickListener(v -> handleAnswer(chosen, question));
             } else {
-                btn.setVisibility(View.GONE);
+                button.setVisibility(View.GONE);
             }
         }
     }
 
-    private void handleAnswer(String chosen, QuizQuestion q) {
+    private void handleAnswer(String chosen, QuizQuestion question) {
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
-        boolean correct = isAnswerCorrect(chosen, q.correctAnswer);
-        int earned = correct ? q.type.points : 0;
+
+        boolean correct = isAnswerCorrect(chosen, question.correctAnswer);
+        int earned = correct ? question.type.points : 0;
 
         if (correct) {
             correctCount++;
             earnedPoints += earned;
         }
 
-        if (q.type == QuestionType.MCQ_EN_TO_TARGET
-                || q.type == QuestionType.MCQ_TARGET_TO_EN
-                || q.type == QuestionType.TRUE_FALSE
-                || q.type == QuestionType.AUDIO_TARGET_TO_EN) {
-            highlightMcq(chosen, q.correctAnswer);
+        if (question.type == QuestionType.MCQ_EN_TO_TARGET
+                || question.type == QuestionType.MCQ_TARGET_TO_EN
+                || question.type == QuestionType.TRUE_FALSE
+                || question.type == QuestionType.AUDIO_TARGET_TO_EN) {
+
+            highlightMcq(chosen, question.correctAnswer);
         } else {
             etTypeAnswer.setEnabled(false);
             btnSubmitText.setEnabled(false);
@@ -749,27 +853,30 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
             repository.saveQuizResult(
                     email,
                     currentSessionId,
-                    q.type.name(),
+                    question.type.name(),
                     currentTargetCode,
-                    q.quizWord.labelEn,
-                    q.prompt,
-                    q.correctAnswer,
+                    question.quizWord.labelEn,
+                    question.prompt,
+                    question.correctAnswer,
                     chosen,
                     correct,
                     earned,
-                    q.type.points
+                    question.type.points
             );
 
-            if (q.quizWord.fromLearnedDb && q.quizWord.wordId > 0) {
-                if (correct) repository.markCorrect(q.quizWord.wordId);
-                else repository.markWrong(q.quizWord.wordId);
+            if (question.quizWord.fromLearnedDb && question.quizWord.wordId > 0) {
+                if (correct) {
+                    repository.markCorrect(question.quizWord.wordId);
+                } else {
+                    repository.markWrong(question.quizWord.wordId);
+                }
             } else if (correct) {
                 repository.saveLearnedWord(
                         email,
-                        q.quizWord.labelEn,
-                        q.quizWord.translated,
-                        q.quizWord.translated,
-                        q.quizWord.targetLang,
+                        question.quizWord.labelEn,
+                        question.quizWord.translated,
+                        question.quizWord.translated,
+                        question.quizWord.targetLang,
                         "quiz_starter"
                 );
             }
@@ -777,12 +884,13 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
         if (!correct) {
             QuizResultEntity wrong = new QuizResultEntity();
-            wrong.questionType = q.type.name();
+            wrong.questionType = question.type.name();
             wrong.targetLang = currentTargetCode;
-            wrong.question = q.prompt;
-            wrong.correctAnswer = q.correctAnswer;
+            wrong.question = question.prompt;
+            wrong.correctAnswer = question.correctAnswer;
             wrong.userAnswer = chosen;
-            wrong.wordLabelEn = q.quizWord.labelEn;
+            wrong.wordLabelEn = question.quizWord.labelEn;
+
             currentWrongResults.add(wrong);
         }
 
@@ -797,10 +905,18 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         txtEmpty.setVisibility(View.VISIBLE);
 
         int wrongCount = questions.size() - correctCount;
-        txtEmpty.setText("Hoàn thành! Đúng " + correctCount + "/" + questions.size()
-                + " | Sai " + wrongCount);
+
+        txtEmpty.setText(
+                getString(
+                        R.string.quiz_finished_summary,
+                        correctCount,
+                        questions.size(),
+                        wrongCount
+                )
+        );
 
         String email = new UserDatabase(requireContext()).getLoggedInEmail();
+
         if (email != null) {
             repository.saveQuizSession(
                     currentSessionId,
@@ -823,52 +939,90 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
         StringBuilder sb = new StringBuilder();
         int wrongCount = questions.size() - correctCount;
 
-        sb.append("Language: ").append(currentTargetCode)
-                .append("\nSource: ").append(currentSourceMode)
-                .append("\nĐúng: ").append(correctCount)
-                .append("\nSai: ").append(wrongCount);
+        sb.append(getString(R.string.quiz_language_label))
+                .append(": ")
+                .append(currentTargetCode)
+                .append("\n")
+                .append(getString(R.string.quiz_source_label))
+                .append(": ")
+                .append(currentSourceMode)
+                .append("\n")
+                .append(getString(R.string.quiz_correct_label))
+                .append(": ")
+                .append(correctCount)
+                .append("\n")
+                .append(getString(R.string.quiz_wrong_label))
+                .append(": ")
+                .append(wrongCount);
 
         if (!currentWrongResults.isEmpty()) {
-            sb.append("\n\nCâu sai:");
-            for (QuizResultEntity r : currentWrongResults) {
-                sb.append("\n- ").append(r.questionType)
-                        .append(": ").append(r.question)
-                        .append("\n  Bạn trả lời: ").append(r.userAnswer)
-                        .append("\n  Đúng: ").append(r.correctAnswer);
+            sb.append("\n\n")
+                    .append(getString(R.string.quiz_wrong_questions_label))
+                    .append(":");
+
+            for (QuizResultEntity result : currentWrongResults) {
+                sb.append("\n- ")
+                        .append(result.questionType)
+                        .append(": ")
+                        .append(result.question)
+                        .append("\n ")
+                        .append(getString(R.string.quiz_user_answer_prefix, result.userAnswer))
+                        .append("\n ")
+                        .append(getString(R.string.quiz_correct_answer_prefix, result.correctAnswer));
             }
         } else {
-            sb.append("\n\nKhông có câu sai nào.");
+            sb.append("\n\n")
+                    .append(getString(R.string.quiz_no_wrong_questions));
         }
 
         txtLastQuizReview.setText(sb.toString());
     }
 
-    private List<String> buildWrongTranslatedOptions(List<QuizWord> pool, QuizWord correctWord, int count) {
+    private List<String> buildWrongTranslatedOptions(
+            List<QuizWord> pool,
+            QuizWord correctWord,
+            int count
+    ) {
         List<String> wrongs = new ArrayList<>();
 
-        for (QuizWord w : pool) {
-            if (w.labelEn.equalsIgnoreCase(correctWord.labelEn)) continue;
-            if (w.translated.equalsIgnoreCase(correctWord.translated)) continue;
-            if (!wrongs.contains(w.translated)) {
-                wrongs.add(w.translated);
+        for (QuizWord word : pool) {
+            if (word.labelEn.equalsIgnoreCase(correctWord.labelEn)) {
+                continue;
+            }
+
+            if (word.translated.equalsIgnoreCase(correctWord.translated)) {
+                continue;
+            }
+
+            if (!wrongs.contains(word.translated)) {
+                wrongs.add(word.translated);
             }
         }
 
         Collections.shuffle(wrongs);
+
         return wrongs.size() > count ? wrongs.subList(0, count) : wrongs;
     }
 
-    private List<String> buildWrongEnglishOptions(List<QuizWord> pool, QuizWord correctWord, int count) {
+    private List<String> buildWrongEnglishOptions(
+            List<QuizWord> pool,
+            QuizWord correctWord,
+            int count
+    ) {
         List<String> wrongs = new ArrayList<>();
 
-        for (QuizWord w : pool) {
-            if (w.labelEn.equalsIgnoreCase(correctWord.labelEn)) continue;
-            if (!wrongs.contains(w.labelEn)) {
-                wrongs.add(w.labelEn);
+        for (QuizWord word : pool) {
+            if (word.labelEn.equalsIgnoreCase(correctWord.labelEn)) {
+                continue;
+            }
+
+            if (!wrongs.contains(word.labelEn)) {
+                wrongs.add(word.labelEn);
             }
         }
 
         Collections.shuffle(wrongs);
+
         return wrongs.size() > count ? wrongs.subList(0, count) : wrongs;
     }
 
@@ -879,47 +1033,53 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
     private String shuffleLetters(String word) {
         List<Character> chars = new ArrayList<>();
+
         for (char c : word.toCharArray()) {
             chars.add(c);
         }
+
         Collections.shuffle(chars);
 
         StringBuilder sb = new StringBuilder();
+
         for (char c : chars) {
             sb.append(c);
         }
+
         return sb.toString();
     }
 
     private void highlightMcq(String chosen, String correctAnswer) {
-        MaterialButton[] btns = {btnA, btnB, btnC, btnD};
+        MaterialButton[] buttons = {btnA, btnB, btnC, btnD};
 
-        for (MaterialButton btn : btns) {
-            if (btn.getVisibility() != View.VISIBLE) continue;
+        for (MaterialButton button : buttons) {
+            if (button.getVisibility() != View.VISIBLE) {
+                continue;
+            }
 
-            btn.setOnClickListener(null);
-            btn.setEnabled(false);
+            button.setOnClickListener(null);
+            button.setEnabled(false);
 
-            String txt = btn.getText().toString();
+            String text = button.getText().toString();
 
-            if (txt.equals(correctAnswer)) {
-                btn.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#1D9E75")));
-                btn.setTextColor(Color.parseColor("#1D9E75"));
-            } else if (txt.equals(chosen)) {
-                btn.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#E24B4A")));
-                btn.setTextColor(Color.parseColor("#E24B4A"));
+            if (text.equals(correctAnswer)) {
+                button.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#1D9E75")));
+                button.setTextColor(Color.parseColor("#1D9E75"));
+            } else if (text.equals(chosen)) {
+                button.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#E24B4A")));
+                button.setTextColor(Color.parseColor("#E24B4A"));
             }
         }
     }
 
     private void resetButtons() {
-        MaterialButton[] btns = {btnA, btnB, btnC, btnD};
+        MaterialButton[] buttons = {btnA, btnB, btnC, btnD};
 
-        for (MaterialButton btn : btns) {
-            btn.setEnabled(true);
-            btn.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#1D9E75")));
-            btn.setTextColor(getResources().getColor(android.R.color.tab_indicator_text, null));
-            btn.setOnClickListener(null);
+        for (MaterialButton button : buttons) {
+            button.setEnabled(true);
+            button.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#1D9E75")));
+            button.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_color));
+            button.setOnClickListener(null);
         }
     }
 
@@ -932,6 +1092,7 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
 
         for (QuizWord word : extra) {
             String key = word.labelEn.toLowerCase(Locale.ROOT);
+
             if (!map.containsKey(key)) {
                 map.put(key, word);
             }
@@ -944,23 +1105,36 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
     private boolean isAnswerCorrect(String chosen, String expected) {
         String a = normalize(chosen);
         String b = normalize(expected);
-        if (a.equals(b)) return true;
+
+        if (a.equals(b)) {
+            return true;
+        }
 
         int distance = levenshtein(a, b);
+
         return b.length() >= 5 && distance <= 1;
     }
 
     private int levenshtein(String a, String b) {
         int[][] dp = new int[a.length() + 1][b.length() + 1];
 
-        for (int i = 0; i <= a.length(); i++) dp[i][0] = i;
-        for (int j = 0; j <= b.length(); j++) dp[0][j] = j;
+        for (int i = 0; i <= a.length(); i++) {
+            dp[i][0] = i;
+        }
+
+        for (int j = 0; j <= b.length(); j++) {
+            dp[0][j] = j;
+        }
 
         for (int i = 1; i <= a.length(); i++) {
             for (int j = 1; j <= b.length(); j++) {
                 int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
+
                 dp[i][j] = Math.min(
-                        Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+                        Math.min(
+                                dp[i - 1][j] + 1,
+                                dp[i][j - 1] + 1
+                        ),
                         dp[i - 1][j - 1] + cost
                 );
             }
@@ -970,8 +1144,14 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
     }
 
     private String safeTranslated(LearnedWordEntity word, String targetLang) {
-        if (!isBlank(word.translated)) return word.translated;
-        if ("vi".equalsIgnoreCase(targetLang) && !isBlank(word.labelVi)) return word.labelVi;
+        if (!isBlank(word.translated)) {
+            return word.translated;
+        }
+
+        if ("vi".equalsIgnoreCase(targetLang) && !isBlank(word.labelVi)) {
+            return word.labelVi;
+        }
+
         return word.translated;
     }
 
@@ -984,15 +1164,19 @@ public class QuizTabFragment extends Fragment implements QuizWrongReviewAdapter.
     }
 
     private String normalize(String s) {
-        if (s == null) return "";
-        return s.trim().toLowerCase(Locale.ROOT)
+        if (s == null) {
+            return "";
+        }
+
+        return s.trim()
+                .toLowerCase(Locale.ROOT)
                 .replaceAll("[\\p{Punct}]", "")
                 .replaceAll("\\s+", " ");
     }
 
-    private void toast(String s) {
+    private void toast(String message) {
         if (isAdded() && getContext() != null) {
-            Toast.makeText(getContext(), s, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
 

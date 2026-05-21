@@ -337,9 +337,9 @@ public final class YoloV8Classifier {
         bitmap.getPixels(pixelBuffer, 0, inputWidth, 0, 0, inputWidth, inputHeight);
 
         for (int val : pixelBuffer) {
-            inputBuffer.putFloat(((val >> 16) & 0xFF) / 255f);
-            inputBuffer.putFloat(((val >> 8) & 0xFF) / 255f);
-            inputBuffer.putFloat((val & 0xFF) / 255f);
+            inputBuffer.putFloat(((val >> 16) & 0xFF) / 255f); // R
+            inputBuffer.putFloat(((val >> 8) & 0xFF) / 255f);  // G
+            inputBuffer.putFloat((val & 0xFF) / 255f);         // B
         }
 
         inputBuffer.rewind();
@@ -400,8 +400,8 @@ public final class YoloV8Classifier {
 
         Collections.sort(decoded, (a, b) -> Float.compare(b.score, a.score));
 
-        if (decoded.size() > 80) {
-            decoded = new ArrayList<>(decoded.subList(0, 80));
+        if (decoded.size() > 50) {
+            decoded = new ArrayList<>(decoded.subList(0, 50));
         }
 
         List<Candidate> nms = applyClassWiseNms(decoded, NMS_IOU_THRESHOLD);

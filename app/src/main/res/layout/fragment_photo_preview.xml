@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
  ~ Project: My Application
  ~ File: fragment_photo_preview.xml
--->
+ -->
 
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -25,6 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
+            android:contentDescription="@string/zoomed_photo"
             android:scaleType="fitCenter" />
 
         <vn.edu.usth.myapplication.PhotoPreviewOverlayView
@@ -33,6 +36,7 @@
             android:layout_height="match_parent"
             android:clickable="false"
             android:focusable="false" />
+
     </FrameLayout>
 
     <!-- Bottom info + actions -->
@@ -56,7 +60,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Detected: ..."
+            android:text="@string/detected_objects_prefix"
             android:textColor="@android:color/white"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -72,7 +76,7 @@
                 android:id="@+id/btn_back_to_camera"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="Back"
+                android:contentDescription="@string/back_button"
                 app:backgroundTint="#E6DDF5"
                 app:maxImageSize="28dp"
                 app:srcCompat="@android:drawable/ic_media_previous"
@@ -83,7 +87,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:contentDescription="Save Photo"
+                android:contentDescription="@string/save_photo"
                 android:visibility="gone"
                 app:backgroundTint="#6A00FF"
                 app:maxImageSize="24dp"
@@ -96,7 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_weight="1"
-                android:text="Proceed to Translation"
+                android:text="@string/proceed_to_translation"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
@@ -104,7 +108,9 @@
                 app:cornerRadius="18dp"
                 app:icon="@android:drawable/ic_menu_set_as"
                 app:iconTint="@android:color/white" />
+
         </LinearLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

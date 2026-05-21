@@ -1,83 +1,236 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ~ Copyright (c) 2025 Android project OpenVision API
-  ~ All rights reserved.
-  ~ Project: My Application
-  ~ File: strings.xml
-  ~ Last Modified: 17/10/2025 0:56
-  -->
 
 <resources>
     <string name="app_name">CamStudy</string>
-    <string name="title_home">Home</string>
-    <string name="title_camera">Camera</string>
-    <string name="title_history">History</string>
-    <string name="title_settings">Settings</string>
-    <string name="welcome_back">Welcome back!</string>
-    <string name="welcome_subtitle">Learn with your Camera!</string>
-    <string name="take_photo">Take Photo</string>
-    <string name="take_photo_desc">Capture beautiful moments</string>
-    <string name="view_history">View History</string>
-    <string name="view_history_desc">Review your previous translations</string>
-    <string name="photo_history">History</string>
-    <string name="camera_permission_required">Camera permission is required</string>
-    <string name="grant_permission">Grant Permission</string>
-    <string name="capture">Capture</string>
-    <string name="switch_camera">Switch Camera</string>
-    <string name="gallery">Gallery</string>
 
-    <!-- Login -->
-    <string name="login">Login</string>
+    <string name="title_home">Trang chủ</string>
+    <string name="title_camera">Máy ảnh</string>
+    <string name="title_history">Học tập</string>
+    <string name="title_settings">Cài đặt</string>
+
+    <string name="home">Trang chủ</string>
+    <string name="camera">Máy ảnh</string>
+    <string name="learning">Học tập</string>
+    <string name="history">Lịch sử</string>
+    <string name="my_words">Từ của tôi</string>
+    <string name="quiz">Luyện tập</string>
+    <string name="settings">Cài đặt</string>
+
+    <string name="welcome_back">Chào mừng trở lại!</string>
+    <string name="welcome_subtitle">Học cùng camera của bạn!</string>
+    <string name="take_photo">Chụp ảnh</string>
+    <string name="take_photo_desc">Chụp ảnh để nhận diện đồ vật</string>
+    <string name="view_history">Xem lịch sử</string>
+    <string name="view_history_desc">Xem lại các từ đã học trước đó</string>
+    <string name="photo_history">Lịch sử</string>
+
+    <string name="quick_actions">Thao tác nhanh</string>
+    <string name="one_shot">Chụp một lần</string>
+    <string name="take_photo_detect">Chụp ảnh và nhận diện</string>
+    <string name="streaming">Nhận diện trực tiếp</string>
+    <string name="videocam">Camera trực tiếp</string>
+    <string name="quiz_review">Ôn lại từ đã học</string>
+    <string name="import_your_image">Chọn ảnh từ thiết bị</string>
+
+    <string name="camera_permission_required">Ứng dụng cần quyền camera</string>
+    <string name="grant_permission">Cấp quyền</string>
+    <string name="capture">Chụp</string>
+    <string name="switch_camera">Đổi camera</string>
+    <string name="gallery">Thư viện</string>
+
+    <string name="login">Đăng nhập</string>
+    <string name="login_subtitle">Đăng nhập để tiếp tục học cùng camera.</string>
     <string name="email">Email</string>
-    <string name="password">Password</string>
-    <string name="sign_in">Sign in</string>
-    <string name="register">Register</string>
-    <string name="full_name">Full Name</string>
-    <string name="confirm_password">Confirm Password</string>
-    <string name="back_to_login">Back to Login</string>
+    <string name="password">Mật khẩu</string>
+    <string name="sign_in">Đăng nhập</string>
+    <string name="register">Đăng ký</string>
+    <string name="full_name">Họ và tên</string>
+    <string name="confirm_password">Xác nhận mật khẩu</string>
+    <string name="back_to_login">Quay lại đăng nhập</string>
+    <string name="create_account">Tạo tài khoản</string>
+    <string name="create_new_account">Tạo tài khoản mới</string>
+    <string name="register_subtitle">Đăng ký để lưu từ vựng, lịch sử luyện tập và tiến độ học.</string>
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="forgot_password_subtitle">Nhập email của bạn để đặt lại mật khẩu.</string>
+    <string name="reset_password">Đặt lại mật khẩu</string>
+    <string name="send_reset_link">Gửi yêu cầu đặt lại</string>
 
-    <!-- Welcome screen -->
-    <string name="tex1">Welcome to</string>
+    <string name="tex1">Chào mừng đến với</string>
     <string name="tex2"> CamStudy</string>
-    <string name="tex3">Explore the world through your camera</string>
-    <string name="start">Start</string>
+    <string name="tex3">Khám phá thế giới qua camera của bạn</string>
+    <string name="start">Bắt đầu</string>
 
-    <!-- Settings -->
-    <string name="flash_icon">Flash icon</string>
-    <string name="delete_icon">Delete icon</string>
-    <string name="logout_icon">Logout icon</string>
-    <string name="dark_mode_icon">Dark mode icon</string>
+    <string name="flash_icon">Biểu tượng đèn flash</string>
+    <string name="delete_icon">Biểu tượng xóa</string>
+    <string name="logout_icon">Biểu tượng đăng xuất</string>
+    <string name="dark_mode_icon">Biểu tượng chế độ tối</string>
 
-    <!-- Photo Zoom -->
-    <string name="back_button">Back</string>
-    <string name="zoomed_photo">Zoomed photo</string>
+    <string name="back_button">Quay lại</string>
+    <string name="back">← Quay lại</string>
+    <string name="zoomed_photo">Ảnh phóng to</string>
 
-    <!-- Photo Preview & Object Detection -->
-    <string name="analyzing_image">Analyzing image...</string>
-    <string name="back_to_camera">Back to Camera</string>
-    <string name="no_objects_detected">No objects detected</string>
-    <string name="object_detection_unavailable">Object detection not available</string>
-    <string name="detection_failed">Detection failed</string>
-    <string name="import_image">Import Image</string>
-    <string name="save_photo">Save Photo</string>
-    <string name="proceed_to_translation">Proceed to Translation</string>
+    <string name="analyzing_image">Đang phân tích ảnh...</string>
+    <string name="back_to_camera">Quay lại camera</string>
+    <string name="no_objects_detected">Không phát hiện vật thể</string>
+    <string name="object_detection_unavailable">Không thể nhận diện vật thể</string>
+    <string name="detection_failed">Nhận diện thất bại</string>
+    <string name="import_image">Chọn ảnh</string>
+    <string name="save_photo">Lưu ảnh</string>
+    <string name="proceed_to_translation">Chuyển sang dịch</string>
 
-    <!-- Translation Fragment -->
-    <string name="no_objects_placeholder">No objects detected. Using placeholder:</string>
-    <string name="placeholder_car">Car</string>
-    <string name="detected_single_object">Detected object:</string>
-    <string name="detected_multiple_objects">Multiple objects detected. Select one:</string>
-    <string name="enter_word_to_translate">Please enter a word to translate</string>
-    <string name="select_detected_word">Select detected word</string>
-    <string name="source_text_english">Source Text: </string>
-    <string name="translation">Translation</string>
-    <string name="translate">Translate</string>
-    <string name="translation_tips">ℹ️ Translation Tips</string>
-    <string name="translation_tips_content">• Translations are shown in Vietnamese, Japanese, and French\n• For real-time translation, integrate Google Translate API\n• Single words work best for object detection</string>
-    <string name="camera_icon">Camera Icon</string>
+    <string name="no_objects_placeholder">Không phát hiện đồ vật. Dùng từ mẫu:</string>
+    <string name="placeholder_car">Xe hơi</string>
+    <string name="detected_single_object">Đồ vật phát hiện:</string>
+    <string name="detected_multiple_objects">Phát hiện nhiều đồ vật. Hãy chọn một:</string>
+    <string name="enter_word_to_translate">Vui lòng nhập từ cần dịch</string>
+    <string name="select_detected_word">Chọn từ đã phát hiện</string>
+    <string name="source_text_english">Văn bản nguồn: </string>
+    <string name="translation">Dịch từ vựng</string>
+    <string name="translate">Dịch</string>
+    <string name="translation_tips">ℹ️ Mẹo dịch</string>
+    <string name="translation_tips_content">• Bản dịch có thể hiển thị bằng nhiều ngôn ngữ\n• Có thể tích hợp API dịch để dịch thời gian thực\n• Nhận diện đồ vật hoạt động tốt nhất với từ đơn</string>
+
+    <string name="camera_icon">Biểu tượng camera</string>
     <string name="_1_0x">1.0x</string>
     <string name="_2_0x">2.0x</string>
-    <string name="camera_controls">Camera Controls</string>
-    <string name="flash_button">Flash Button</string>
-    <string name="Appdesc">Cam Study is an application with simple object detection. It then translates the detected object into other languages, helping you learn what the object is called in different languages.</string>
+    <string name="camera_controls">Điều khiển camera</string>
+    <string name="flash_button">Nút đèn flash</string>
+
+    <string name="learning_progress">Tiến độ học tập</string>
+    <string name="words_learned">Từ đã học</string>
+    <string name="empty_history">Chưa có từ nào trong lịch sử</string>
+    <string name="empty_my_words">Chưa có từ yêu thích</string>
+    <string name="learned_times">Đã học %1$d lần</string>
+
+    <string name="settings_title">Cài đặt</string>
+    <string name="update_profile">Cập nhật hồ sơ</string>
+    <string name="update_profile_desc">Xem hồ sơ, đổi mật khẩu và đổi email</string>
+    <string name="manage_privacy">Quản lý quyền riêng tư</string>
+    <string name="manage_privacy_desc">Quản lý quyền camera, quyền thư viện và xóa lịch sử</string>
+    <string name="user_preferences">Tùy chọn người dùng</string>
+    <string name="user_preferences_description">Chọn ngôn ngữ ứng dụng, ngôn ngữ dịch và giao diện</string>
+    <string name="user_preferences_desc">Đổi ngôn ngữ ứng dụng, ngôn ngữ dịch và giao diện</string>
+    <string name="feedback">Gửi phản hồi</string>
+    <string name="send_feedback_desc">Gửi góp ý của bạn qua email</string>
+    <string name="logout">Đăng xuất</string>
+    <string name="logout_desc">Thoát khỏi tài khoản hiện tại</string>
+    <string name="logout_confirm">Bạn có chắc muốn đăng xuất không?</string>
+
+    <string name="app_language">Ngôn ngữ ứng dụng</string>
+    <string name="app_language_description">Đổi ngôn ngữ hiển thị cho toàn bộ ứng dụng</string>
+    <string name="default_translation_language">Ngôn ngữ dịch mặc định</string>
+    <string name="default_translation_language_description">Ngôn ngữ mặc định dùng khi dịch từ vựng</string>
+    <string name="select_theme">Chọn giao diện</string>
+    <string name="theme">Giao diện</string>
+    <string name="light_mode">Sáng</string>
+    <string name="dark_mode">Tối</string>
+
+    <string name="profile">Hồ sơ</string>
+    <string name="current_profile">Hồ sơ hiện tại</string>
+    <string name="view_current_profile">Xem hồ sơ hiện tại</string>
+    <string name="change_password">Đổi mật khẩu</string>
+    <string name="change_email">Đổi email</string>
+    <string name="current_password">Mật khẩu hiện tại</string>
+    <string name="new_password">Mật khẩu mới</string>
+    <string name="confirm_new_password">Xác nhận mật khẩu mới</string>
+    <string name="new_email">Email mới</string>
+
+    <string name="privacy">Quyền riêng tư</string>
+    <string name="manage_privacy_title_desc">Quản lý quyền truy cập và xóa lịch sử hiện tại</string>
+    <string name="camera_permission">Quyền camera</string>
+    <string name="manage_camera_permission">Quản lý quyền camera</string>
+    <string name="camera_permission_desc">Bật để cấp quyền sử dụng camera</string>
+    <string name="gallery_permission">Quyền thư viện ảnh</string>
+    <string name="manage_gallery_permission">Quản lý quyền thư viện ảnh</string>
+    <string name="gallery_permission_desc">Bật để cấp quyền chọn ảnh từ thiết bị</string>
+    <string name="clear_history">Xóa lịch sử</string>
+    <string name="clear_history_desc">Xóa toàn bộ lịch sử học tập hiện tại</string>
+    <string name="clear_history_confirm">Bạn có chắc muốn xóa lịch sử học tập không?</string>
+
+    <string name="ok">OK</string>
+    <string name="save">Lưu</string>
+    <string name="cancel">Hủy</string>
+    <string name="yes">Có</string>
+    <string name="no">Không</string>
+    <string name="clear">Xóa</string>
+    <string name="open_settings">Mở cài đặt</string>
+    <string name="restart_now">Khởi động lại ngay</string>
+    <string name="later">Để sau</string>
+    <string name="restart_required">Cần khởi động lại</string>
+    <string name="restart_required_message">Ứng dụng cần khởi động lại để áp dụng %1$s. Bạn có muốn khởi động lại ngay không?</string>
+    <string name="restart_manually">Vui lòng khởi động lại ứng dụng thủ công để áp dụng thay đổi</string>
+
+    <string name="error_enter_email_password">Vui lòng nhập email và mật khẩu</string>
+    <string name="error_account_not_found">Tài khoản không tồn tại. Vui lòng đăng ký!</string>
+    <string name="login_success">Đăng nhập thành công!</string>
+    <string name="wrong_password">Sai mật khẩu. Vui lòng thử lại!</string>
+    <string name="email_required">Vui lòng nhập email</string>
+    <string name="valid_email_required">Vui lòng nhập email hợp lệ</string>
+    <string name="password_required">Vui lòng nhập mật khẩu</string>
+    <string name="password_min_length">Mật khẩu phải có ít nhất 6 ký tự</string>
+    <string name="confirm_password_required">Vui lòng xác nhận mật khẩu</string>
+    <string name="passwords_do_not_match">Mật khẩu không khớp</string>
+    <string name="email_already_registered">Email này đã được đăng ký</string>
+    <string name="email_already_registered_login">Email này đã được đăng ký. Vui lòng đăng nhập.</string>
+    <string name="register_success">Đăng ký thành công! Vui lòng đăng nhập</string>
+    <string name="register_failed">Đăng ký thất bại. Vui lòng thử lại.</string>
+    <string name="email_not_registered">Email này chưa được đăng ký</string>
+    <string name="forgot_password_not_available">Chức năng quên mật khẩu qua email chưa khả dụng ở chế độ dữ liệu cục bộ</string>
+
+    <string name="no_image_selected">Chưa chọn ảnh</string>
+    <string name="no_email_app">Không tìm thấy ứng dụng email</string>
+    <string name="logged_out_success">Đăng xuất thành công</string>
+    <string name="no_account_logged_in">Chưa có tài khoản đăng nhập</string>
+    <string name="not_available">Không khả dụng</string>
+    <string name="password_changed_success">Đổi mật khẩu thành công</string>
+    <string name="current_password_incorrect">Mật khẩu hiện tại không đúng</string>
+    <string name="email_changed_success">Đổi email thành công</string>
+    <string name="cannot_change_email">Không thể đổi email. Hãy kiểm tra mật khẩu hoặc email đã tồn tại.</string>
+    <string name="new_email_required">Vui lòng nhập email mới</string>
+    <string name="new_email_must_be_different">Email mới phải khác email hiện tại</string>
+    <string name="current_password_required">Vui lòng nhập mật khẩu hiện tại</string>
+    <string name="new_password_required">Vui lòng nhập mật khẩu mới</string>
+
+    <string name="camera_permission_granted">Đã cấp quyền camera</string>
+    <string name="camera_permission_denied">Đã từ chối quyền camera</string>
+    <string name="gallery_permission_granted">Đã cấp quyền thư viện ảnh</string>
+    <string name="gallery_permission_denied">Đã từ chối quyền thư viện ảnh</string>
+    <string name="permission_turn_off_message">Để tắt quyền này, Android sẽ quản lý trong Cài đặt ứng dụng. Bạn có muốn mở cài đặt không?</string>
+    <string name="history_cleared_success">Đã xóa lịch sử thành công</string>
+
+    <string name="default_language_updated">Đã cập nhật ngôn ngữ dịch mặc định</string>
+
+    <string name="object_detected">Vật thể phát hiện: %1$s</string>
+    <string name="object_detected_none">Vật thể phát hiện: Không có</string>
+    <string name="source_language_english">Ngôn ngữ nguồn: Tiếng Anh</string>
+    <string name="target_language">Ngôn ngữ đích</string>
+    <string name="speak">Phát âm</string>
+    <string name="go_home">Về trang chủ</string>
+
+    <string name="offline_preparing">Offline: đang chuẩn bị...</string>
+    <string name="offline_checking">Offline: đang kiểm tra...</string>
+    <string name="offline_ready">Offline: đã sẵn sàng</string>
+    <string name="offline_retrying">Offline: đang thử lại...</string>
+    <string name="offline_download_error">Offline: tải lỗi</string>
+    <string name="offline_no_model">Offline: chưa có model</string>
+    <string name="offline_not_ready">Offline: chưa sẵn sàng</string>
+
+    <string name="enter_text_to_translate">Vui lòng nhập văn bản cần dịch</string>
+    <string name="model_download_failed">Tải model offline thất bại</string>
+    <string name="language_model_not_downloaded">Ngôn ngữ này chưa được tải offline trước đó</string>
+    <string name="offline_model_not_ready">Model offline chưa sẵn sàng</string>
+    <string name="translation_completed">Dịch hoàn tất!</string>
+    <string name="translation_completed_speech_unavailable">Dịch hoàn tất! Không thể phát âm.</string>
+    <string name="offline_translation_completed">Dịch offline hoàn tất!</string>
+    <string name="offline_translation_completed_speech_unavailable">Dịch offline hoàn tất! Không thể phát âm.</string>
+    <string name="offline_translation_failed">Dịch offline thất bại</string>
+    <string name="tts_unavailable">Không thể dùng phát âm</string>
+    <string name="no_text_to_speak">Không có văn bản để phát âm</string>
+
+    <string name="Appdesc">CamStudy là ứng dụng nhận diện đồ vật đơn giản. Ứng dụng dịch đồ vật được nhận diện sang ngôn ngữ khác để giúp bạn học tên gọi của đồ vật bằng nhiều ngôn ngữ.</string>
+
+    <string name="user_id">ID người dùng</string>
+    <string name="password_reset_email_sent">Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.</string>
+    <string name="password_reset_email_failed">Không thể gửi email đặt lại mật khẩu.</string>
+    <string name="change_email_after_sync">Chức năng đổi email sẽ được thêm sau khi hoàn tất đồng bộ Supabase.</string>
 </resources>

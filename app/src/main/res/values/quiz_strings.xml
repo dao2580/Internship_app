@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="quiz_total_score_zero">Tổng quiz: Đúng 0 | Sai 0</string>
+    <string name="quiz_total_score_format">Tổng quiz: Đúng %1$d | Sai %2$d</string>
+
+    <string name="quiz_question_count">Số câu hỏi</string>
+    <string name="quiz_analyzing_data">Đang phân tích dữ liệu quiz...</string>
+    <string name="start_quiz">Bắt đầu Quiz</string>
+    <string name="quiz_start_hint">Chọn ngôn ngữ rồi bấm Bắt đầu Quiz</string>
+    <string name="quiz_question_number_sample">Câu 1/10</string>
+    <string name="quiz_question_number_format">Câu %1$d/%2$d</string>
+
+    <string name="question_type">Loại câu hỏi</string>
+    <string name="listen_again">Nghe lại</string>
+    <string name="type_answer_hint">Nhập câu trả lời</string>
+    <string name="submit_answer">Nộp đáp án</string>
+
+    <string name="last_quiz_review">Lượt quiz vừa làm</string>
+    <string name="no_quiz_session">Chưa có lượt quiz nào.</string>
+    <string name="recent_quiz_sessions">Các lượt quiz gần đây</string>
+    <string name="no_data">Chưa có dữ liệu.</string>
+    <string name="recent_wrong_questions">Các câu sai gần đây</string>
+    <string name="speak_correct_answer">Phát âm đáp án đúng</string>
+
+    <string name="quiz_no_audio">Không có audio</string>
+    <string name="quiz_tts_starting">TTS đang khởi động, bấm lại</string>
+    <string name="quiz_tts_reset">TTS vừa reset, bấm lại</string>
+
+    <string name="quiz_not_logged_in">Bạn cần đăng nhập trước</string>
+    <string name="quiz_not_logged_in_short">Chưa đăng nhập.</string>
+    <string name="quiz_no_data_to_generate">Không có dữ liệu để tạo quiz.</string>
+    <string name="quiz_not_enough_data">Không đủ dữ liệu để tạo quiz cho ngôn ngữ này.</string>
+    <string name="quiz_enter_answer">Hãy nhập câu trả lời</string>
+
+    <string name="quiz_source_starter_priority">Starter Pack ưu tiên</string>
+    <string name="quiz_source_mixed">Mixed</string>
+    <string name="quiz_source_my_words_priority">My Words ưu tiên</string>
+    <string name="quiz_source_format">Nguồn quiz: %1$s | Learned: %2$d | Starter: %3$d</string>
+
+    <string name="quiz_correct_label">Đúng</string>
+    <string name="quiz_wrong_label">Sai</string>
+    <string name="quiz_language_label">Language</string>
+    <string name="quiz_source_label">Source</string>
+    <string name="quiz_wrong_questions_label">Câu sai</string>
+    <string name="quiz_no_wrong_questions">Không có câu sai nào.</string>
+    <string name="quiz_finished_summary">Hoàn thành! Đúng %1$d/%2$d | Sai %3$d</string>
+
+    <string name="quiz_user_answer_prefix">Bạn trả lời: %1$s</string>
+    <string name="quiz_correct_answer_prefix">Đúng: %1$s</string>
+
+    <string name="quiz_question_en_to_target">\'%1$s\' nghĩa là gì trong ngôn ngữ đã chọn?</string>
+    <string name="quiz_question_target_to_en">\'%1$s\' trong English là gì?</string>
+    <string name="quiz_question_type_en">Gõ từ tiếng Anh của: %1$s</string>
+    <string name="quiz_question_true_false">True or False:\n\'%1$s\' = \'%2$s\'</string>
+    <string name="quiz_question_unscramble">Sắp xếp lại chữ cái để tạo từ tiếng Anh của \'%1$s\': %2$s</string>
+    <string name="quiz_question_audio">Nghe từ và chọn English đúng</string>
+
+    <string name="quiz_true">True</string>
+    <string name="quiz_false">False</string>
+</resources>

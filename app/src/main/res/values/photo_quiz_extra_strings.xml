@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="no_image_to_save">Không có ảnh để lưu</string>
+    <string name="failed_to_load_image">Không thể tải ảnh: %1$s</string>
+    <string name="detected_objects_prefix">Phát hiện: %1$s</string>
+    <string name="detect_failed_detail">Nhận diện thất bại: %1$s</string>
+    <string name="photo_saved_gallery">Đã lưu ảnh vào thư viện!</string>
+    <string name="failed_to_save_photo">Không thể lưu ảnh: %1$s</string>
+</resources>

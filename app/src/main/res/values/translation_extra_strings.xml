@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="translation_screen_title">Dịch từ vựng</string>
+    <string name="source_text">Văn bản nguồn</string>
+    <string name="translated_text">Bản dịch</string>
+    <string name="translation_loading">Đang dịch...</string>
+    <string name="translation_empty_result">Chưa có bản dịch</string>
+</resources>

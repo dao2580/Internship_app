@@ -37,30 +37,14 @@ public class SettingsProfileFragment extends Fragment {
         LinearLayout layoutChangeEmail = view.findViewById(R.id.layout_change_email);
 
         btnBack.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
-
         layoutViewCurrentProfile.setOnClickListener(v -> showCurrentProfileDialog());
-
-        /*
-         * Khi chuyển sang Supabase Auth, không đổi password bằng Room nữa.
-         * Cách an toàn hơn là gửi email reset password qua Supabase.
-         */
         layoutChangePassword.setOnClickListener(v -> sendPasswordResetEmail());
 
-        /*
-         * Đổi email trên Supabase cần flow riêng:
-         * - update email trên Supabase Auth
-         * - xác nhận email nếu Supabase bật confirm
-         * - đảm bảo user_id không đổi
-         *
-         * Vì vậy giai đoạn này tạm khóa để tránh làm hỏng account/sync.
-         */
-        layoutChangeEmail.setOnClickListener(v -> {
-            Toast.makeText(
-                    requireContext(),
-                    "Change email will be added after Supabase sync is completed.",
-                    Toast.LENGTH_LONG
-            ).show();
-        });
+        layoutChangeEmail.setOnClickListener(v -> Toast.makeText(
+                requireContext(),
+                R.string.change_email_after_sync,
+                Toast.LENGTH_LONG
+        ).show());
 
         return view;
     }
@@ -72,20 +56,20 @@ public class SettingsProfileFragment extends Fragment {
         if (currentEmail == null || currentEmail.trim().isEmpty()) {
             Toast.makeText(
                     requireContext(),
-                    "No account logged in",
+                    R.string.no_account_logged_in,
                     Toast.LENGTH_SHORT
             ).show();
             return;
         }
 
-        String message =
-                "Email: " + currentEmail +
-                        "\n\nUser ID: " + (currentUserId != null ? currentUserId : "Not available");
+        String message = getString(R.string.email) + ": " + currentEmail
+                + "\n\n" + getString(R.string.user_id) + ": "
+                + (currentUserId != null ? currentUserId : getString(R.string.not_available));
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Current Profile")
+                .setTitle(R.string.current_profile)
                 .setMessage(message)
-                .setPositiveButton("OK", null)
+                .setPositiveButton(R.string.ok, null)
                 .show();
     }
 
@@ -95,7 +79,7 @@ public class SettingsProfileFragment extends Fragment {
         if (email == null || email.trim().isEmpty()) {
             Toast.makeText(
                     requireContext(),
-                    "No account logged in",
+                    R.string.no_account_logged_in,
                     Toast.LENGTH_SHORT
             ).show();
             return;
@@ -108,7 +92,7 @@ public class SettingsProfileFragment extends Fragment {
                     public void onSuccess() {
                         Toast.makeText(
                                 requireContext(),
-                                "Password reset email sent. Please check your inbox.",
+                                R.string.password_reset_email_sent,
                                 Toast.LENGTH_LONG
                         ).show();
                     }
@@ -117,7 +101,7 @@ public class SettingsProfileFragment extends Fragment {
                     public void onError(String message) {
                         Toast.makeText(
                                 requireContext(),
-                                message != null ? message : "Cannot send reset email",
+                                R.string.password_reset_email_failed,
                                 Toast.LENGTH_LONG
                         ).show();
                     }

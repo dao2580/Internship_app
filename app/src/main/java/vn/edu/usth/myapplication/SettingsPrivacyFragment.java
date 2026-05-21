@@ -52,9 +52,12 @@ public class SettingsPrivacyFragment extends Fragment {
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
                     syncPermissionSwitches();
+
                     Toast.makeText(
                             requireContext(),
-                            isGranted ? "Camera permission granted" : "Camera permission denied",
+                            isGranted
+                                    ? R.string.camera_permission_granted
+                                    : R.string.camera_permission_denied,
                             Toast.LENGTH_SHORT
                     ).show();
                 }
@@ -64,9 +67,12 @@ public class SettingsPrivacyFragment extends Fragment {
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
                     syncPermissionSwitches();
+
                     Toast.makeText(
                             requireContext(),
-                            isGranted ? "Gallery permission granted" : "Gallery permission denied",
+                            isGranted
+                                    ? R.string.gallery_permission_granted
+                                    : R.string.gallery_permission_denied,
                             Toast.LENGTH_SHORT
                     ).show();
                 }
@@ -75,16 +81,18 @@ public class SettingsPrivacyFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         View view = inflater.inflate(R.layout.fragment_settings_privacy, container, false);
 
         userDatabase = new UserDatabase(requireContext());
         appRepository = new AppRepository(requireContext());
 
         TextView btnBack = view.findViewById(R.id.btn_back_privacy);
+
         layoutCameraPermission = view.findViewById(R.id.layout_camera_permission);
         layoutGalleryPermission = view.findViewById(R.id.layout_gallery_permission);
         layoutClearHistory = view.findViewById(R.id.layout_clear_history);
@@ -92,8 +100,7 @@ public class SettingsPrivacyFragment extends Fragment {
         switchCameraPermission = view.findViewById(R.id.switch_camera_permission);
         switchGalleryPermission = view.findViewById(R.id.switch_gallery_permission);
 
-        btnBack.setOnClickListener(v ->
-                Navigation.findNavController(v).popBackStack());
+        btnBack.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
 
         setupListeners();
         syncPermissionSwitches();
@@ -113,22 +120,26 @@ public class SettingsPrivacyFragment extends Fragment {
         layoutClearHistory.setOnClickListener(v -> showClearHistoryDialog());
 
         switchCameraPermission.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isUpdatingSwitches) return;
+            if (isUpdatingSwitches) {
+                return;
+            }
 
             if (isChecked) {
                 requestCameraPermission();
             } else {
-                handlePermissionTurnOff("Camera permission", switchCameraPermission);
+                handlePermissionTurnOff(getString(R.string.camera_permission), switchCameraPermission);
             }
         });
 
         switchGalleryPermission.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isUpdatingSwitches) return;
+            if (isUpdatingSwitches) {
+                return;
+            }
 
             if (isChecked) {
                 requestGalleryPermission();
             } else {
-                handlePermissionTurnOff("Gallery permission", switchGalleryPermission);
+                handlePermissionTurnOff(getString(R.string.gallery_permission), switchGalleryPermission);
             }
         });
     }
@@ -138,6 +149,7 @@ public class SettingsPrivacyFragment extends Fragment {
             syncPermissionSwitches();
             return;
         }
+
         cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
     }
 
@@ -148,6 +160,7 @@ public class SettingsPrivacyFragment extends Fragment {
             syncPermissionSwitches();
             return;
         }
+
         galleryPermissionLauncher.launch(galleryPermission);
     }
 
@@ -156,9 +169,9 @@ public class SettingsPrivacyFragment extends Fragment {
 
         new AlertDialog.Builder(requireContext())
                 .setTitle(title)
-                .setMessage("To turn this permission off, Android manages it in App Settings. Open settings now?")
-                .setPositiveButton("Open Settings", (dialog, which) -> openAppSettings())
-                .setNegativeButton("Cancel", null)
+                .setMessage(R.string.permission_turn_off_message)
+                .setPositiveButton(R.string.open_settings, (dialog, which) -> openAppSettings())
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -166,20 +179,27 @@ public class SettingsPrivacyFragment extends Fragment {
         String email = userDatabase.getLoggedInEmail();
 
         if (email == null) {
-            Toast.makeText(requireContext(), "No account logged in", Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                    requireContext(),
+                    R.string.no_account_logged_in,
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Clear History")
-                .setMessage("Are you sure you want to clear learned words and quiz history?")
-                .setPositiveButton("Clear", (dialog, which) -> {
+                .setTitle(R.string.clear_history)
+                .setMessage(R.string.clear_history_confirm)
+                .setPositiveButton(R.string.clear, (dialog, which) -> {
                     appRepository.clearHistory(email);
-                    Toast.makeText(requireContext(),
-                            "History cleared successfully",
-                            Toast.LENGTH_SHORT).show();
+
+                    Toast.makeText(
+                            requireContext(),
+                            R.string.history_cleared_success,
+                            Toast.LENGTH_SHORT
+                    ).show();
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -190,6 +210,10 @@ public class SettingsPrivacyFragment extends Fragment {
     }
 
     private void syncPermissionSwitches() {
+        if (switchCameraPermission == null || switchGalleryPermission == null) {
+            return;
+        }
+
         boolean hasCamera = hasPermission(Manifest.permission.CAMERA);
         boolean hasGallery = hasPermission(getGalleryPermission());
 
@@ -214,6 +238,7 @@ public class SettingsPrivacyFragment extends Fragment {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return Manifest.permission.READ_MEDIA_IMAGES;
         }
+
         return Manifest.permission.READ_EXTERNAL_STORAGE;
     }
 }
