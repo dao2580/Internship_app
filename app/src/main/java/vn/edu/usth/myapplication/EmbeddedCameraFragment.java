@@ -121,6 +121,11 @@ public class EmbeddedCameraFragment extends Fragment {
         FloatingActionButton btnFlash = v.findViewById(R.id.btn_flash);
         MaterialButton btnGrant = v.findViewById(R.id.btn_grant_permission);
 
+        MaterialButton btnCameraBack = v.findViewById(R.id.btn_camera_back);
+        btnCameraBack.setOnClickListener(clickView ->
+                Navigation.findNavController(clickView).navigateUp()
+        );
+
         sharedPreferences = requireContext().getSharedPreferences(
                 "CamPrefs",
                 Context.MODE_PRIVATE

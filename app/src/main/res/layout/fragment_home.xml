@@ -1,105 +1,250 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
+    android:fillViewport="true"
     tools:context=".HomeFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingStart="24dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="32dp">
 
-        <!-- Header Section -->
-        <LinearLayout
+        <!-- Header -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            android:baselineAligned="false"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_marginBottom="28dp"
+            android:text="@string/app_name"
+            android:textColor="@color/primary_text"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/app_name"
-                    android:textColor="@color/primary_text"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Welcome Section -->
+        <!-- Welcome Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="16dp"
             app:cardBackgroundColor="@color/card_background"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp">
+            app:cardCornerRadius="18dp"
+            app:cardElevation="5dp"
+            app:strokeColor="#226200EE"
+            app:strokeWidth="1dp">
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="24dp">
+                android:background="@drawable/bg_home_welcome_card">
+
+                <!-- Decorative bubble right -->
+                <View
+                    android:layout_width="74dp"
+                    android:layout_height="74dp"
+                    android:layout_gravity="end|top"
+                    android:layout_marginTop="-20dp"
+                    android:layout_marginEnd="-20dp"
+                    android:background="@drawable/bg_home_soft_purple_circle" />
+
+                <!-- Decorative bubble left bottom -->
+                <View
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_gravity="start|bottom"
+                    android:layout_marginStart="-8dp"
+                    android:layout_marginBottom="-8dp"
+                    android:background="@drawable/bg_home_soft_purple_circle" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center_horizontal|top"
+                    android:layout_marginTop="12dp"
+                    android:src="@drawable/ic_fun_star"
+                    app:tint="#FFFFA500" />
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="24dp"
+                    android:paddingTop="22dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="22dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/welcome_back"
-                        android:textColor="@color/primary_text"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/welcome_subtitle"
-                        android:textColor="@color/secondary_text"
-                        android:textSize="16sp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:text="@string/welcome_back"
+                            android:textColor="@color/primary_text"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/welcome_subtitle"
+                            android:textColor="@color/secondary_text"
+                            android:textSize="16sp" />
+
+                    </LinearLayout>
+
+                    <!-- Bé cầm kính lúp: file thic.png trong drawable -->
+                    <ImageView
+                        android:layout_width="112dp"
+                        android:layout_height="112dp"
+                        android:layout_marginStart="8dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/anh" />
 
                 </LinearLayout>
 
-                <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:src="@drawable/logoapp"
-                    app:tint="@color/primary_color" />
-
-            </LinearLayout>
+            </FrameLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Quick Actions -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Small Mission Bar -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="28dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="2dp"
+            app:strokeColor="#556200EE"
+            app:strokeWidth="1dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_home_mission_bar">
+
+                <View
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="end|bottom"
+                    android:layout_marginEnd="-16dp"
+                    android:layout_marginBottom="-18dp"
+                    android:background="@drawable/bg_home_soft_purple_circle" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="end|top"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="18dp"
+                    android:src="@drawable/ic_fun_star"
+                    app:tint="#FFFFA500" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="18dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="14dp">
+
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="16dp"
+                        android:background="@drawable/bg_home_soft_purple_circle">
+
+                        <ImageView
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_mission_target" />
+
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mission_title"
+                            android:textColor="@color/primary_text"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/mission_desc"
+                            android:textColor="@color/secondary_text"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
+
+                    <!-- Khủng long: file logo.png trong drawable -->
+                    <ImageView
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
+                        android:layout_marginStart="8dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/dino" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Quick Actions Title -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="@string/quick_actions"
-            android:textColor="@color/primary_text"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/quick_actions"
+                android:textColor="@color/primary_text"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="6dp"
+                android:src="@drawable/ic_fun_star"
+                app:tint="#FFFFA500" />
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_fun_sparkle"
+                app:tint="@color/primary_color" />
+
+        </LinearLayout>
 
         <!-- One-Shot + Streaming -->
         <LinearLayout
@@ -109,6 +254,7 @@
             android:orientation="horizontal"
             android:weightSum="2">
 
+            <!-- Take Photo -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_take_photo"
                 android:layout_width="0dp"
@@ -119,44 +265,69 @@
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/primary_color"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp">
+                app:cardCornerRadius="18dp"
+                app:cardElevation="4dp">
 
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="match_parent">
+
+                    <View
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:layout_gravity="end|top"
+                        android:layout_marginTop="-14dp"
+                        android:layout_marginEnd="-14dp"
+                        android:background="@drawable/bg_home_white_bubble" />
 
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginBottom="8dp"
-                        android:src="@drawable/ic_camera"
-                        android:tint="@android:color/white" />
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="start|top"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="10dp"
+                        android:src="@drawable/ic_fun_star"
+                        app:tint="#FFFFA500" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/one_shot"
-                        android:textColor="@android:color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:alpha="0.8"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="@string/take_photo_detect"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                </LinearLayout>
+                        <ImageView
+                            android:layout_width="42dp"
+                            android:layout_height="42dp"
+                            android:layout_marginBottom="8dp"
+                            android:src="@drawable/ic_camera"
+                            android:tint="@android:color/white" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/one_shot"
+                            android:textColor="@android:color/white"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:alpha="0.85"
+                            android:gravity="center"
+                            android:text="@string/take_photo_detect"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                </FrameLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Streaming -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_streaming"
                 android:layout_width="0dp"
@@ -167,41 +338,66 @@
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="4dp"
                 app:strokeColor="@color/primary_color"
                 app:strokeWidth="2dp">
 
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="match_parent">
+
+                    <View
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:layout_gravity="end|top"
+                        android:layout_marginTop="-14dp"
+                        android:layout_marginEnd="-14dp"
+                        android:background="@drawable/bg_home_soft_purple_circle" />
 
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginBottom="8dp"
-                        android:src="@drawable/ic_streaming" />
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="start|top"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="10dp"
+                        android:src="@drawable/ic_fun_sparkle"
+                        app:tint="#FFFFA500" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/streaming"
-                        android:textColor="@color/primary_color"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="@string/videocam"
-                        android:textColor="@color/secondary_text"
-                        android:textSize="12sp" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                </LinearLayout>
+                        <ImageView
+                            android:layout_width="42dp"
+                            android:layout_height="42dp"
+                            android:layout_marginBottom="8dp"
+                            android:src="@drawable/ic_streaming"
+                            app:tint="@color/primary_color" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/streaming"
+                            android:textColor="@color/primary_color"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/videocam"
+                            android:textColor="@color/secondary_text"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                </FrameLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -217,54 +413,87 @@
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="@color/card_background"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
+            app:strokeColor="#1A6200EE"
+            app:strokeWidth="1dp">
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="20dp">
+                android:layout_height="wrap_content">
 
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/ic_history"
-                    app:tint="@color/primary_color" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/quiz"
-                        android:textColor="@color/primary_text"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/quiz_review"
-                        android:textColor="@color/secondary_text"
-                        android:textSize="14sp" />
-
-                </LinearLayout>
+                <View
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:layout_gravity="end|bottom"
+                    android:layout_marginEnd="-18dp"
+                    android:layout_marginBottom="-20dp"
+                    android:background="@drawable/bg_home_soft_purple_circle" />
 
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_arrow_forward"
-                    app:tint="@color/secondary_text" />
+                    android:layout_gravity="end|top"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="46dp"
+                    android:src="@drawable/ic_fun_star"
+                    app:tint="#FFFFA500" />
 
-            </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:layout_marginEnd="16dp"
+                        android:background="@drawable/bg_home_soft_purple_circle">
+
+                        <ImageView
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_history"
+                            app:tint="@color/primary_color" />
+
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:text="@string/quiz"
+                            android:textColor="@color/primary_text"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/quiz_review"
+                            android:textColor="@color/secondary_text"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_arrow_forward"
+                        app:tint="@color/secondary_text" />
+
+                </LinearLayout>
+
+            </FrameLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
@@ -278,54 +507,87 @@
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="@color/card_background"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
+            app:strokeColor="#1A6200EE"
+            app:strokeWidth="1dp">
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="20dp">
+                android:layout_height="wrap_content">
 
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/upload_40px"
-                    app:tint="@color/primary_color" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/import_image"
-                        android:textColor="@color/primary_text"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/import_your_image"
-                        android:textColor="@color/secondary_text"
-                        android:textSize="14sp" />
-
-                </LinearLayout>
+                <View
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:layout_gravity="end|bottom"
+                    android:layout_marginEnd="-18dp"
+                    android:layout_marginBottom="-20dp"
+                    android:background="@drawable/bg_home_soft_purple_circle" />
 
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_arrow_forward"
-                    app:tint="@color/secondary_text" />
+                    android:layout_gravity="end|top"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="46dp"
+                    android:src="@drawable/ic_fun_cloud"
+                    app:tint="@color/primary_color" />
 
-            </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:layout_marginEnd="16dp"
+                        android:background="@drawable/bg_home_soft_purple_circle">
+
+                        <ImageView
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/upload_40px"
+                            app:tint="@color/primary_color" />
+
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:text="@string/import_image"
+                            android:textColor="@color/primary_text"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/import_your_image"
+                            android:textColor="@color/secondary_text"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_arrow_forward"
+                        app:tint="@color/secondary_text" />
+
+                </LinearLayout>
+
+            </FrameLayout>
 
         </com.google.android.material.card.MaterialCardView>
 

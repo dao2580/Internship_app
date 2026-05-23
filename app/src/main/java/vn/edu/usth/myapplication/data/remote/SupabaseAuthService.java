@@ -161,6 +161,74 @@ public class SupabaseAuthService {
         });
     }
 
+    public void updatePassword(String accessToken, String newPassword, SimpleCallback callback) {
+        executor.execute(() -> {
+            try {
+                String url = BuildConfig.SUPABASE_URL + "/auth/v1/user";
+
+                JsonObject bodyJson = new JsonObject();
+                bodyJson.addProperty("password", newPassword);
+
+                Request request = new Request.Builder()
+                        .url(url)
+                        .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                        .addHeader("Authorization", "Bearer " + accessToken)
+                        .addHeader("Content-Type", "application/json")
+                        .put(RequestBody.create(bodyJson.toString(), JSON))
+                        .build();
+
+                Response response = client.newCall(request).execute();
+                String body = response.body() != null ? response.body().string() : "";
+
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() ->
+                            callback.onError(parseError(body, "Cannot update password"))
+                    );
+                    return;
+                }
+
+                mainHandler.post(callback::onSuccess);
+
+            } catch (Exception e) {
+                mainHandler.post(() -> callback.onError(e.getMessage()));
+            }
+        });
+    }
+
+    public void updateEmail(String accessToken, String newEmail, SimpleCallback callback) {
+        executor.execute(() -> {
+            try {
+                String url = BuildConfig.SUPABASE_URL + "/auth/v1/user";
+
+                JsonObject bodyJson = new JsonObject();
+                bodyJson.addProperty("email", newEmail);
+
+                Request request = new Request.Builder()
+                        .url(url)
+                        .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                        .addHeader("Authorization", "Bearer " + accessToken)
+                        .addHeader("Content-Type", "application/json")
+                        .put(RequestBody.create(bodyJson.toString(), JSON))
+                        .build();
+
+                Response response = client.newCall(request).execute();
+                String body = response.body() != null ? response.body().string() : "";
+
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() ->
+                            callback.onError(parseError(body, "Cannot update email"))
+                    );
+                    return;
+                }
+
+                mainHandler.post(callback::onSuccess);
+
+            } catch (Exception e) {
+                mainHandler.post(() -> callback.onError(e.getMessage()));
+            }
+        });
+    }
+
     private void postError(AuthCallback callback, String message) {
         mainHandler.post(() ->
                 callback.onError(message != null ? message : "Unknown error")

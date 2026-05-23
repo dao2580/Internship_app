@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Shadow -->
+    <path
+        android:fillColor="#14000000"
+        android:pathData="M22,86C22,82 74,82 74,86C74,90 22,90 22,86Z" />
+
+    <!-- Tail -->
+    <path
+        android:strokeColor="#FF9B5A2E"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M70,63C82,63 84,77 74,80C68,82 64,77 67,73" />
+
+    <!-- Body -->
+    <path
+        android:fillColor="#FFB56A3B"
+        android:pathData="M48,34C33,34 24,46 24,61C24,76 34,86 48,86C62,86 72,76 72,61C72,46 63,34 48,34Z" />
+
+    <!-- Belly -->
+    <path
+        android:fillColor="#FFF7D5AE"
+        android:pathData="M38,56C38,71 42,80 48,80C54,80 58,71 58,56C58,51 54,48 48,48C42,48 38,51 38,56Z" />
+
+    <!-- Head -->
+    <path
+        android:fillColor="#FFB56A3B"
+        android:pathData="M48,10C31,10 20,22 20,38C20,54 32,66 48,66C64,66 76,54 76,38C76,22 65,10 48,10Z" />
+
+    <!-- Hair -->
+    <path
+        android:fillColor="#FF9B5A2E"
+        android:pathData="M45,10C46,6 49,5 52,8C54,4 58,5 59,9C61,7 64,8 64,12C61,11 58,13 55,15C52,13 48,12 45,10Z" />
+
+    <!-- Left Ear -->
+    <path
+        android:fillColor="#FFB56A3B"
+        android:pathData="M18,32C12,32 8,37 8,43C8,49 12,54 18,54C24,54 28,49 28,43C28,37 24,32 18,32Z" />
+
+    <!-- Right Ear -->
+    <path
+        android:fillColor="#FFB56A3B"
+        android:pathData="M78,32C84,32 88,37 88,43C88,49 84,54 78,54C72,54 68,49 68,43C68,37 72,32 78,32Z" />
+
+    <!-- Left Inner Ear -->
+    <path
+        android:fillColor="#FFFFC09A"
+        android:pathData="M18,36C14,36 11,39 11,43C11,47 14,50 18,50C22,50 25,47 25,43C25,39 22,36 18,36Z" />
+
+    <!-- Right Inner Ear -->
+    <path
+        android:fillColor="#FFFFC09A"
+        android:pathData="M78,36C82,36 85,39 85,43C85,47 82,50 78,50C74,50 71,47 71,43C71,39 74,36 78,36Z" />
+
+    <!-- Face -->
+    <path
+        android:fillColor="#FFF7D5AE"
+        android:pathData="M48,22C37,22 30,29 30,39C30,50 38,58 48,58C58,58 66,50 66,39C66,29 59,22 48,22Z" />
+
+    <!-- Left Cheek -->
+    <path
+        android:fillColor="#FFFADDBB"
+        android:pathData="M28,45C28,52 34,57 41,57C44,57 46,54 46,50C46,43 41,37 34,37C30,37 28,40 28,45Z" />
+
+    <!-- Right Cheek -->
+    <path
+        android:fillColor="#FFFADDBB"
+        android:pathData="M68,45C68,52 62,57 55,57C52,57 50,54 50,50C50,43 55,37 62,37C66,37 68,40 68,45Z" />
+
+    <!-- Left Eye White -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M40,38C40,42.4 36.4,46 32,46C27.6,46 24,42.4 24,38C24,33.6 27.6,30 32,30C36.4,30 40,33.6 40,38Z" />
+
+    <!-- Right Eye White -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M72,38C72,42.4 68.4,46 64,46C59.6,46 56,42.4 56,38C56,33.6 59.6,30 64,30C68.4,30 72,33.6 72,38Z" />
+
+    <!-- Left Eye -->
+    <path
+        android:fillColor="#FF4A2208"
+        android:pathData="M38,38C38,41.3 35.3,44 32,44C28.7,44 26,41.3 26,38C26,34.7 28.7,32 32,32C35.3,32 38,34.7 38,38Z" />
+
+    <!-- Right Eye -->
+    <path
+        android:fillColor="#FF4A2208"
+        android:pathData="M70,38C70,41.3 67.3,44 64,44C60.7,44 58,41.3 58,38C58,34.7 60.7,32 64,32C67.3,32 70,34.7 70,38Z" />
+
+    <!-- Eye Highlights -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M34,35C34,36.3 32.9,37.4 31.6,37.4C30.3,37.4 29.2,36.3 29.2,35C29.2,33.7 30.3,32.6 31.6,32.6C32.9,32.6 34,33.7 34,35Z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M66,35C66,36.3 64.9,37.4 63.6,37.4C62.3,37.4 61.2,36.3 61.2,35C61.2,33.7 62.3,32.6 63.6,32.6C64.9,32.6 66,33.7 66,35Z" />
+
+    <!-- Eyebrows -->
+    <path
+        android:strokeColor="#FF8B4A24"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M26,27C29,24 34,24 37,27" />
+
+    <path
+        android:strokeColor="#FF8B4A24"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M59,27C62,24 67,24 70,27" />
+
+    <!-- Nose -->
+    <path
+        android:fillColor="#FFC74D5B"
+        android:pathData="M44,45C44,42 52,42 52,45C52,48 48,50 48,50C48,50 44,48 44,45Z" />
+
+    <!-- Mouth -->
+    <path
+        android:fillColor="#FF8E1D1D"
+        android:pathData="M39,50C42,56 54,56 57,50C54,48 42,48 39,50Z" />
+
+    <!-- Tongue -->
+    <path
+        android:fillColor="#FFFF7D7D"
+        android:pathData="M44,53C45,55 51,55 52,53C50,52 46,52 44,53Z" />
+
+    <!-- Arms -->
+    <path
+        android:fillColor="#FFA35E35"
+        android:pathData="M33,60C29,63 28,68 31,73C35,72 38,70 39,66C39,63 37,61 33,60Z" />
+
+    <path
+        android:fillColor="#FFA35E35"
+        android:pathData="M63,60C67,63 68,68 65,73C61,72 58,70 57,66C57,63 59,61 63,60Z" />
+
+    <!-- Legs -->
+    <path
+        android:fillColor="#FFA35E35"
+        android:pathData="M35,73C30,75 29,81 33,84C37,85 40,83 41,79C41,76 39,74 35,73Z" />
+
+    <path
+        android:fillColor="#FFA35E35"
+        android:pathData="M61,73C66,75 67,81 63,84C59,85 56,83 55,79C55,76 57,74 61,73Z" />
+
+    <!-- Book Left -->
+    <path
+        android:fillColor="#FF42A5F5"
+        android:pathData="M34,62H48V76H34C31,76 29,74 29,71V67C29,64 31,62 34,62Z" />
+
+    <!-- Book Right -->
+    <path
+        android:fillColor="#FF1E88E5"
+        android:pathData="M48,62H62C65,62 67,64 67,67V71C67,74 65,76 62,76H48Z" />
+
+    <!-- Book Center -->
+    <path
+        android:strokeColor="#FF1565C0"
+        android:strokeWidth="1.8"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M48,62V76" />
+
+    <!-- Book Pages -->
+    <path
+        android:strokeColor="#FFFFF3E0"
+        android:strokeWidth="1.2"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M35,64C39,63 43,64 47,66" />
+
+    <path
+        android:strokeColor="#FFFFF3E0"
+        android:strokeWidth="1.2"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M49,66C53,64 57,63 61,64" />
+
+    <!-- Hands -->
+    <path
+        android:fillColor="#FFF8C89B"
+        android:pathData="M31,67C29,69 29,72 31,74C34,74 36,72 36,69C36,67 34,66 31,67Z" />
+
+    <path
+        android:fillColor="#FFF8C89B"
+        android:pathData="M65,67C67,69 67,72 65,74C62,74 60,72 60,69C60,67 62,66 65,67Z" />
+
+    <!-- Feet -->
+    <path
+        android:fillColor="#FFF8C89B"
+        android:pathData="M33,82C31,85 34,88 39,88C41,86 40,82 33,82Z" />
+
+    <path
+        android:fillColor="#FFF8C89B"
+        android:pathData="M63,82C65,85 62,88 57,88C55,86 56,82 63,82Z" />
+
+</vector>

@@ -233,4 +233,27 @@
     <string name="password_reset_email_sent">Password reset email sent. Please check your inbox.</string>
     <string name="password_reset_email_failed">Cannot send password reset email.</string>
     <string name="change_email_after_sync">Change email will be added after Supabase sync is completed.</string>
+
+
+        <string name="mission_title">Small Mission</string>
+        <string name="mission_desc">Take a photo of an object, listen to its pronunciation, and remember one new word.</string>
+
+        <string name="learning_progress_subtitle">Review vocabulary and practice every day!</string>
+        <string name="learning_corner_title">Your Learning Corner</string>
+        <string name="learning_corner_desc">View history, save favorite words, and start a quiz.</string>
+
+        <string name="settings_corner_title">Settings Corner</string>
+        <string name="settings_corner_desc">Manage your account, privacy, and learning options.</string>
+
+        <string name="camera_frame_hint">Place the object inside the frame</string>
+        <string name="streaming_camera_hint">Point the camera at an object...</string>
+
+        <string name="translation_title_simple">Vocabulary Translation</string>
+        <string name="source_text_label">Source text:</string>
+        <string name="target_language_label">Target language</string>
+        <string name="offline_ready_short">Offline: ready</string>
+        <string name="translation_result_hint">Vocabulary translation</string>
+        <string name="back_plain">Back</string>
+        <string name="go_home_plain">Go home</string>
+
 </resources>
