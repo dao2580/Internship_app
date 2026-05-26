@@ -24,4 +24,7 @@
     <color name="card_background">#FFFFFFFF</color>
     <color name="status_bar_color">#FF6200EE</color>
     <color name="orange">#FFA500</color>
+    <color name="text_on_light_card_primary">#2A2138</color>
+    <color name="text_on_light_card_secondary">#6F6578</color>
+
 </resources>
