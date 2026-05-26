@@ -256,4 +256,27 @@
         <string name="back_plain">Back</string>
         <string name="go_home_plain">Go home</string>
 
+    <string name="reset_password_title">Reset Password</string>
+    <string name="reset_password_instruction">Enter the verification code sent to your email and create a new password.</string>
+    <string name="verification_code">Verification code</string>
+    <string name="otp_required">Please enter the verification code</string>
+    <string name="otp_must_be_8_digits">Verification code must be 8 digits</string>
+    <string name="reset_password_otp_subtitle">An 8-digit code has been sent to your email.</string>
+    <string name="invalid_or_expired_code">Invalid or expired verification code</string>
+    <string name="password_reset_success">Password updated successfully. Please log in again.</string>
+    <string name="password_reset_failed">Cannot reset password. Please try again.</string>
+
+    <string name="reset_password_otp_title">Enter verification code</string>
+    <string name="reset_password_email_sent_default">The verification code has been sent to your email</string>
+    <string name="reset_password_email_sent_to">Verification code sent to: %1$s</string>
+    <string name="reset_password_password_hint">Your password should have at least 6 characters to protect your learning account.</string>
+    <string name="reset_password_invalid_email_retry">Invalid email. Please request a new verification code.</string>
+    <string name="password_not_match">Passwords do not match</string>
+
+    <string name="resend_verification_code">Resend verification code</string>
+    <string name="resend_code_success">A new verification code has been sent to your email.</string>
+    <string name="resend_code_failed">Cannot resend code. Please try again.</string>
+    <string name="resend_code_wait">Resend after %1$d seconds</string>
+    <string name="tts_language_not_supported">This language is not supported for pronunciation on this device</string>
+
 </resources>

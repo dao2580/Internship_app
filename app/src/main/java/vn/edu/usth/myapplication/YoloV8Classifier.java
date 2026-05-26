@@ -261,12 +261,9 @@ public final class YoloV8Classifier {
     }
 
     public List<Result> detect(Bitmap bitmap) {
-        return runDetection(bitmap, 8);
+        return runDetection(bitmap, 5);
     }
 
-    public List<Result> detectTop3(Bitmap bitmap) {
-        return runDetection(bitmap, 3);
-    }
 
     private List<Result> runDetection(Bitmap bitmap, int maxResults) {
         if (bitmap == null) {

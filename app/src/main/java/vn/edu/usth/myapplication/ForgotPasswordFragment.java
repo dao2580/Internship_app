@@ -74,6 +74,12 @@ public class ForgotPasswordFragment extends Fragment {
                         R.string.password_reset_email_sent,
                         Toast.LENGTH_LONG
                 ).show();
+
+                Bundle args = new Bundle();
+                args.putString("email", email);
+
+                Navigation.findNavController(requireView())
+                        .navigate(R.id.nav_reset_password, args);
             }
 
             @Override

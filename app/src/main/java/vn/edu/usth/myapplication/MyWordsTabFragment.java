@@ -70,15 +70,46 @@ public class MyWordsTabFragment extends Fragment implements MyWordsAdapter.OnSpe
 
     @Override
     public void onSpeakClick(LearnedWordEntity item) {
-        pronunciationHelper.speak(getEnglishWord(item));
+        pronunciationHelper.speak(
+                getTargetWord(item),
+                getTargetLanguageCode(item)
+        );
     }
 
-    private String getEnglishWord(LearnedWordEntity item) {
-        if (item == null || item.labelEn == null) {
+    private String getTargetWord(LearnedWordEntity item) {
+        if (item == null) {
             return "";
         }
 
-        return item.labelEn.trim();
+        if (item.translated != null && !item.translated.trim().isEmpty()) {
+            return item.translated.trim();
+        }
+
+        if (item.labelVi != null && !item.labelVi.trim().isEmpty()) {
+            return item.labelVi.trim();
+        }
+
+        if (item.labelEn != null && !item.labelEn.trim().isEmpty()) {
+            return item.labelEn.trim();
+        }
+
+        return "";
+    }
+
+    private String getTargetLanguageCode(LearnedWordEntity item) {
+        if (item == null) {
+            return "en";
+        }
+
+        if (item.targetLang != null && !item.targetLang.trim().isEmpty()) {
+            return item.targetLang.trim();
+        }
+
+        if (item.translated != null && !item.translated.trim().isEmpty()) {
+            return "vi";
+        }
+
+        return "en";
     }
 
     @Override

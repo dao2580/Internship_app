@@ -255,4 +255,29 @@
     <string name="back_plain">Quay lại</string>
     <string name="go_home_plain">Về trang chủ</string>
 
+
+    <string name="reset_password_title">Đặt lại mật khẩu</string>
+    <string name="reset_password_instruction">Nhập mã xác minh được gửi về email và tạo mật khẩu mới.</string>
+    <string name="verification_code">Mã xác minh</string>
+    <string name="otp_required">Vui lòng nhập mã xác minh</string>
+    <string name="otp_must_be_8_digits">Mã xác minh phải có 8 chữ số</string>
+    <string name="reset_password_otp_subtitle">Mã 8 số đã được gửi về email của bạn.</string>
+    <string name="invalid_or_expired_code">Mã xác minh không đúng hoặc đã hết hạn</string>
+    <string name="password_reset_success">Đổi mật khẩu thành công. Vui lòng đăng nhập lại.</string>
+    <string name="password_reset_failed">Không thể đặt lại mật khẩu. Vui lòng thử lại.</string>
+
+    <string name="reset_password_otp_title">Nhập mã xác minh</string>
+    <string name="reset_password_email_sent_default">Mã xác minh đã được gửi tới email của bạn</string>
+    <string name="reset_password_email_sent_to">Mã xác minh đã được gửi tới: %1$s</string>
+    <string name="reset_password_password_hint">Mật khẩu nên có ít nhất 6 ký tự để bảo vệ tài khoản học tập.</string>
+    <string name="reset_password_invalid_email_retry">Email không hợp lệ. Vui lòng gửi lại mã xác minh.</string>
+    <string name="password_not_match">Mật khẩu xác nhận không khớp</string>
+
+    <string name="resend_verification_code">Gửi lại mã xác minh</string>
+    <string name="resend_code_success">Mã xác minh mới đã được gửi tới email của bạn.</string>
+    <string name="resend_code_failed">Không thể gửi lại mã. Vui lòng thử lại.</string>
+    <string name="resend_code_wait">Gửi lại sau %1$d giây</string>
+    <string name="tts_language_not_supported">Thiết bị không hỗ trợ phát âm ngôn ngữ này</string>
+
+
 </resources>
