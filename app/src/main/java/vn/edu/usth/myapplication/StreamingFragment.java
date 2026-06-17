@@ -60,6 +60,7 @@ public class StreamingFragment extends Fragment {
 
     private static final long FRAME_INTERVAL_MS = 120;
     private static final long DEBOUNCE_SAVE_MS = 3000;
+    private static final long AUTO_SAVE_INTERVAL_MS = 15000;
     private static final long BOX_HOLD_MS = 900;
 
     private static final float TRACK_MATCH_IOU_THRESHOLD = 0.20f;
@@ -68,11 +69,10 @@ public class StreamingFragment extends Fragment {
     private static final int MAX_NEAR_RESULTS = 3;
     private static final float MIN_NEAR_BOX_AREA_RATIO = 0.05f;
 
-    private static final boolean USE_FRONT_CAMERA = true;
-
     private PreviewView previewView;
     private BoundingBoxOverlayView overlayView;
     private MaterialButton btnBack;
+    private MaterialButton btnSwitchCamera;
     private MaterialButton btnSaveAll;
     private TextView txtStreamingHint;
     private AutoCompleteTextView spinnerTargetLanguage;
@@ -92,6 +92,12 @@ public class StreamingFragment extends Fragment {
     private final Map<String, String> translationCache = new HashMap<>();
     private final Set<String> pendingTranslationKeys = new HashSet<>();
 
+    /*
+     * Những từ đang chờ bản dịch thật để lưu History.
+     * Tránh lỗi lưu kiểu cup / cup khi module dịch chưa trả kết quả.
+     */
+    private final Set<String> pendingHistorySaveKeys = new HashSet<>();
+
     private AppRepository repository;
     private AzureTranslatorService translatorService;
     private OfflineTranslatorService offlineTranslatorService;
@@ -99,6 +105,10 @@ public class StreamingFragment extends Fragment {
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private boolean isOfflineModelReady = false;
+
+    private ProcessCameraProvider cameraProvider;
+    private int currentLensFacing = CameraSelector.LENS_FACING_BACK;
+    private boolean isCameraSwitching = false;
     private boolean isUsingFrontCamera = false;
     private String currentTargetCode = "vi";
 
@@ -122,6 +132,7 @@ public class StreamingFragment extends Fragment {
         previewView = v.findViewById(R.id.streaming_preview);
         overlayView = v.findViewById(R.id.streaming_overlay);
         btnBack = v.findViewById(R.id.btn_streaming_back);
+        btnSwitchCamera = v.findViewById(R.id.btn_switch_camera);
         btnSaveAll = v.findViewById(R.id.btn_save_detected);
         txtStreamingHint = v.findViewById(R.id.txt_streaming_hint);
         spinnerTargetLanguage = v.findViewById(R.id.spinner_streaming_target_language);
@@ -137,6 +148,8 @@ public class StreamingFragment extends Fragment {
         btnBack.setOnClickListener(x ->
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment).navigateUp()
         );
+
+        btnSwitchCamera.setOnClickListener(x -> switchCamera());
 
         btnSaveAll.setOnClickListener(x -> saveCurrentDetections());
 
@@ -248,13 +261,12 @@ public class StreamingFragment extends Fragment {
         offlineTranslatorService = null;
         isOfflineModelReady = false;
 
-        if ("vi".equals(targetCode) || "en".equals(targetCode)) {
+        if ("en".equals(targetCode)) {
             isOfflineModelReady = true;
             return;
         }
 
         offlineTranslatorService = new OfflineTranslatorService("en", targetCode);
-
         offlineTranslatorService.downloadModel(new OfflineTranslatorService.DownloadCallback() {
             @Override
             public void onSuccess() {
@@ -277,52 +289,145 @@ public class StreamingFragment extends Fragment {
 
         future.addListener(() -> {
             try {
-                ProcessCameraProvider provider = future.get();
+                cameraProvider = future.get();
+                bindCamera(currentLensFacing);
+                updateSwitchCameraButtonState();
+            } catch (Exception e) {
+                Log.e(TAG, "startCamera failed", e);
+                mainHandler.post(() -> Toast.makeText(
+                        requireContext(),
+                        getString(R.string.streaming_camera_open_failed, buildErrorMessage(e)),
+                        Toast.LENGTH_LONG
+                ).show());
+            }
+        }, ContextCompat.getMainExecutor(requireContext()));
+    }
 
-                Preview preview = new Preview.Builder().build();
-                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+    private void bindCamera(int lensFacing) {
+        if (cameraProvider == null || previewView == null) {
+            return;
+        }
 
-                ImageAnalysis analysis = new ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+        try {
+            CameraSelector selector = new CameraSelector.Builder()
+                    .requireLensFacing(lensFacing)
+                    .build();
+
+            if (!cameraProvider.hasCamera(selector)) {
+                int fallbackLensFacing =
+                        lensFacing == CameraSelector.LENS_FACING_FRONT
+                                ? CameraSelector.LENS_FACING_BACK
+                                : CameraSelector.LENS_FACING_FRONT;
+
+                CameraSelector fallbackSelector = new CameraSelector.Builder()
+                        .requireLensFacing(fallbackLensFacing)
                         .build();
 
-                analysis.setAnalyzer(cameraExecutor, this::analyzeFrame);
-
-                CameraSelector preferredSelector = USE_FRONT_CAMERA
-                        ? CameraSelector.DEFAULT_FRONT_CAMERA
-                        : CameraSelector.DEFAULT_BACK_CAMERA;
-
-                CameraSelector fallbackSelector = USE_FRONT_CAMERA
-                        ? CameraSelector.DEFAULT_BACK_CAMERA
-                        : CameraSelector.DEFAULT_FRONT_CAMERA;
-
-                CameraSelector selector;
-
-                if (provider.hasCamera(preferredSelector)) {
-                    selector = preferredSelector;
-                    isUsingFrontCamera = USE_FRONT_CAMERA;
-                } else if (provider.hasCamera(fallbackSelector)) {
-                    selector = fallbackSelector;
-                    isUsingFrontCamera = !USE_FRONT_CAMERA;
-                } else {
+                if (!cameraProvider.hasCamera(fallbackSelector)) {
                     throw new IllegalStateException("No suitable camera found");
                 }
 
-                provider.unbindAll();
-                provider.bindToLifecycle(this, selector, preview, analysis);
-
-            } catch (Exception e) {
-                Log.e(TAG, "startCamera failed", e);
-
-                mainHandler.post(() ->
-                        Toast.makeText(
-                                requireContext(),
-                                getString(R.string.streaming_camera_open_failed, buildErrorMessage(e)),
-                                Toast.LENGTH_LONG
-                        ).show()
-                );
+                lensFacing = fallbackLensFacing;
+                selector = fallbackSelector;
             }
-        }, ContextCompat.getMainExecutor(requireContext()));
+
+            Preview preview = new Preview.Builder().build();
+            preview.setSurfaceProvider(previewView.getSurfaceProvider());
+
+            ImageAnalysis analysis = new ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build();
+
+            analysis.setAnalyzer(cameraExecutor, this::analyzeFrame);
+
+            cameraProvider.unbindAll();
+            clearStreamingState();
+
+            cameraProvider.bindToLifecycle(
+                    getViewLifecycleOwner(),
+                    selector,
+                    preview,
+                    analysis
+            );
+
+            currentLensFacing = lensFacing;
+            isUsingFrontCamera = lensFacing == CameraSelector.LENS_FACING_FRONT;
+
+        } catch (Exception e) {
+            Log.e(TAG, "bindCamera failed", e);
+            Toast.makeText(
+                    requireContext(),
+                    getString(R.string.streaming_camera_open_failed, buildErrorMessage(e)),
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+
+    private void switchCamera() {
+        if (cameraProvider == null || isCameraSwitching) {
+            return;
+        }
+
+        int newLensFacing =
+                currentLensFacing == CameraSelector.LENS_FACING_FRONT
+                        ? CameraSelector.LENS_FACING_BACK
+                        : CameraSelector.LENS_FACING_FRONT;
+
+        isCameraSwitching = true;
+        updateSwitchCameraButtonState();
+
+        bindCamera(newLensFacing);
+
+        isCameraSwitching = false;
+        updateSwitchCameraButtonState();
+    }
+
+    private void clearStreamingState() {
+        lastFrameTime = 0L;
+
+        trackedDetections.clear();
+        currentDetections.clear();
+
+        if (overlayView != null) {
+            overlayView.clear();
+        }
+
+        if (btnSaveAll != null) {
+            btnSaveAll.setEnabled(false);
+        }
+
+        if (txtStreamingHint != null) {
+            txtStreamingHint.setText(R.string.streaming_hint);
+        }
+    }
+
+    private boolean hasCameraLens(int lensFacing) {
+        if (cameraProvider == null) {
+            return false;
+        }
+
+        try {
+            CameraSelector selector = new CameraSelector.Builder()
+                    .requireLensFacing(lensFacing)
+                    .build();
+
+            return cameraProvider.hasCamera(selector);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void updateSwitchCameraButtonState() {
+        if (btnSwitchCamera == null || cameraProvider == null) {
+            return;
+        }
+
+        boolean canSwitch =
+                hasCameraLens(CameraSelector.LENS_FACING_FRONT)
+                        && hasCameraLens(CameraSelector.LENS_FACING_BACK);
+
+        btnSwitchCamera.setEnabled(canSwitch && !isCameraSwitching);
+        btnSwitchCamera.setAlpha(canSwitch ? 1.0f : 0.45f);
     }
 
     private void analyzeFrame(@NonNull ImageProxy image) {
@@ -476,13 +581,16 @@ public class StreamingFragment extends Fragment {
                 tracked.result = smoothBox(tracked.result, result);
             }
 
-            tracked.labelVi = VocabMap.getVI(result.label);
+            if ("vi".equalsIgnoreCase(currentTargetCode)) {
+                tracked.labelVi = resolveDisplayTranslation(result.label);
+            } else {
+                tracked.labelVi = result.label;
+            }
+
             tracked.lastSeenAt = now;
             tracked.translatedText = resolveDisplayTranslation(result.label);
-
             trackedDetections.put(tracked.id, tracked);
             matchedIds.add(tracked.id);
-
             requestTranslationIfNeeded(result.label);
         }
 
@@ -672,15 +780,17 @@ public class StreamingFragment extends Fragment {
         }
 
         txtStreamingHint.setText(sb.toString());
+
+        autoSaveVisibleDetections();
     }
 
     private String resolveDisplayTranslation(String labelEn) {
-        if ("en".equals(currentTargetCode)) {
-            return labelEn;
+        if (labelEn == null || labelEn.trim().isEmpty()) {
+            return "";
         }
 
-        if ("vi".equals(currentTargetCode)) {
-            return VocabMap.getVI(labelEn);
+        if ("en".equals(currentTargetCode)) {
+            return labelEn;
         }
 
         String key = buildTranslationKey(labelEn, currentTargetCode);
@@ -690,30 +800,48 @@ public class StreamingFragment extends Fragment {
             return cached;
         }
 
-        return VocabMap.getVI(labelEn);
+        return labelEn;
+    }
+
+    private String buildTranslationKey(String labelEn, String targetCode) {
+        String safeLabel = labelEn == null ? "" : labelEn.trim().toLowerCase(Locale.US);
+        String safeTarget = targetCode == null || targetCode.trim().isEmpty()
+                ? currentTargetCode
+                : targetCode.trim().toLowerCase(Locale.US);
+
+        return safeTarget + "|" + safeLabel;
     }
 
     private void requestTranslationIfNeeded(String labelEn) {
-        if ("vi".equals(currentTargetCode) || "en".equals(currentTargetCode)) {
+        if (labelEn == null || labelEn.trim().isEmpty()) {
+            return;
+        }
+
+        if ("en".equals(currentTargetCode)) {
             return;
         }
 
         String targetCode = currentTargetCode;
         String cacheKey = buildTranslationKey(labelEn, targetCode);
 
-        if (translationCache.containsKey(cacheKey)
-                || pendingTranslationKeys.contains(cacheKey)) {
+        if (translationCache.containsKey(cacheKey) || pendingTranslationKeys.contains(cacheKey)) {
             return;
         }
 
         pendingTranslationKeys.add(cacheKey);
 
-        if (NetworkUtils.isInternetAvailable(requireContext())) {
+        if (isAdded() && getContext() != null && NetworkUtils.isInternetAvailable(requireContext())) {
             translatorService.translate(labelEn, targetCode, new AzureTranslatorService.TranslationCallback() {
                 @Override
                 public void onSuccess(String translatedText) {
                     mainHandler.post(() -> {
                         pendingTranslationKeys.remove(cacheKey);
+
+                        if (translatedText == null || translatedText.trim().isEmpty()) {
+                            translateOfflineLabel(labelEn, targetCode, cacheKey);
+                            return;
+                        }
+
                         translationCache.put(cacheKey, translatedText);
                         applyTranslatedValue(labelEn, targetCode, translatedText);
                     });
@@ -744,6 +872,11 @@ public class StreamingFragment extends Fragment {
             public void onSuccess(String translatedText) {
                 mainHandler.post(() -> {
                     pendingTranslationKeys.remove(cacheKey);
+
+                    if (translatedText == null || translatedText.trim().isEmpty()) {
+                        return;
+                    }
+
                     translationCache.put(cacheKey, translatedText);
                     applyTranslatedValue(labelEn, targetCode, translatedText);
                 });
@@ -761,74 +894,243 @@ public class StreamingFragment extends Fragment {
             String targetCode,
             String translatedText
     ) {
-        if (!targetCode.equals(currentTargetCode)) {
+        if (labelEn == null || targetCode == null || translatedText == null
+                || translatedText.trim().isEmpty()) {
             return;
         }
 
-        for (TrackedDetection tracked : trackedDetections.values()) {
-            if (tracked.result.label.equalsIgnoreCase(labelEn)) {
-                tracked.translatedText = translatedText;
+        String finalTranslated = translatedText.trim();
+        String saveKey = buildTranslationKey(labelEn, targetCode);
+        boolean isCurrentTarget = targetCode.equalsIgnoreCase(currentTargetCode);
+
+        if (isCurrentTarget) {
+            for (TrackedDetection tracked : trackedDetections.values()) {
+                if (tracked.result != null && tracked.result.label.equalsIgnoreCase(labelEn)) {
+                    tracked.translatedText = finalTranslated;
+
+                    if ("vi".equalsIgnoreCase(targetCode)) {
+                        tracked.labelVi = finalTranslated;
+                    }
+                }
             }
         }
 
-        publishTrackedDetections();
+        if (pendingHistorySaveKeys.remove(saveKey)) {
+            saveLabelToHistoryNow(labelEn, targetCode, finalTranslated, 0L);
+        }
+
+        if (isCurrentTarget) {
+            publishTrackedDetections();
+        }
     }
 
     private void refreshVisibleTranslations() {
         for (TrackedDetection tracked : trackedDetections.values()) {
+            if (tracked.result == null) {
+                continue;
+            }
+
             tracked.translatedText = resolveDisplayTranslation(tracked.result.label);
+
+            if ("vi".equalsIgnoreCase(currentTargetCode)) {
+                tracked.labelVi = tracked.translatedText;
+            }
+
             requestTranslationIfNeeded(tracked.result.label);
         }
 
         publishTrackedDetections();
     }
 
-    private String buildTranslationKey(String labelEn, String targetCode) {
-        return targetCode + "|" + labelEn.trim().toLowerCase(Locale.US);
+    private void saveCurrentDetections() {
+        saveDetectionsToHistory(true, DEBOUNCE_SAVE_MS);
     }
 
-    private void saveCurrentDetections() {
-        String email = new UserDatabase(requireContext()).getLoggedInEmail();
+    private void autoSaveVisibleDetections() {
+        saveDetectionsToHistory(false, AUTO_SAVE_INTERVAL_MS);
+    }
 
-        if (email == null) {
+    private void saveDetectionsToHistory(boolean showToast, long debounceMs) {
+        if (!isAdded() || getContext() == null || repository == null) {
             return;
         }
 
-        if (currentDetections.isEmpty()) {
-            toast(getString(R.string.streaming_no_object_to_save));
+        if (currentDetections == null || currentDetections.isEmpty()) {
+            if (showToast) {
+                toast(getString(R.string.streaming_no_object_to_save));
+            }
             return;
         }
 
         int savedCount = 0;
-        long now = System.currentTimeMillis();
+        int waitingCount = 0;
+        int recentCount = 0;
 
         for (BoundingBoxOverlayView.DetectionItem item : currentDetections) {
-            String label = item.result.label;
-            Long lastTime = lastSavedTime.get(label);
-
-            if (lastTime != null && now - lastTime < DEBOUNCE_SAVE_MS) {
+            if (item == null || item.result == null) {
                 continue;
             }
 
-            lastSavedTime.put(label, now);
+            String labelEn = safeTrim(item.result.label);
 
-            repository.saveLearnedWord(
-                    email,
-                    label,
-                    item.labelVi,
-                    item.translatedLabel,
-                    currentTargetCode,
-                    "streaming"
+            if (labelEn.isEmpty()) {
+                continue;
+            }
+
+            String targetLang = safeTargetLang(item.targetLangCode);
+
+            if (!isTranslationReadyForHistory(labelEn, targetLang)) {
+                pendingHistorySaveKeys.add(buildTranslationKey(labelEn, targetLang));
+                requestTranslationIfNeeded(labelEn);
+                waitingCount++;
+                continue;
+            }
+
+            String translatedText = getTranslationForHistory(labelEn, targetLang);
+
+            boolean saved = saveLabelToHistoryNow(
+                    labelEn,
+                    targetLang,
+                    translatedText,
+                    debounceMs
             );
 
-            savedCount++;
+            if (saved) {
+                savedCount++;
+            } else {
+                recentCount++;
+            }
+        }
+
+        if (!showToast) {
+            return;
         }
 
         if (savedCount > 0) {
             toast(getString(R.string.streaming_saved_words, savedCount));
-        } else {
+        } else if (waitingCount > 0) {
+            toast(getString(R.string.streaming_words_saved_recently));
+        } else if (recentCount > 0) {
             toast(getString(R.string.streaming_words_saved_recently));
         }
+    }
+
+    private boolean saveLabelToHistoryNow(
+            String labelEn,
+            String targetLang,
+            String translatedText,
+            long debounceMs
+    ) {
+        if (!isAdded() || getContext() == null || repository == null) {
+            return false;
+        }
+
+        String email = new UserDatabase(requireContext()).getLoggedInEmail();
+
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+
+        String cleanLabelEn = safeTrim(labelEn);
+        String cleanTargetLang = safeTargetLang(targetLang);
+        String cleanTranslatedText = safeTrim(translatedText);
+
+        if (cleanLabelEn.isEmpty()) {
+            return false;
+        }
+
+        if ("en".equalsIgnoreCase(cleanTargetLang)) {
+            cleanTranslatedText = cleanLabelEn;
+        }
+
+        if (cleanTranslatedText.isEmpty()) {
+            return false;
+        }
+
+        String saveKey = buildTranslationKey(cleanLabelEn, cleanTargetLang);
+        long now = System.currentTimeMillis();
+        Long lastTime = lastSavedTime.get(saveKey);
+
+        if (debounceMs > 0 && lastTime != null && now - lastTime < debounceMs) {
+            return false;
+        }
+
+        String labelVi = buildLabelViForHistory(
+                cleanLabelEn,
+                cleanTargetLang,
+                cleanTranslatedText
+        );
+
+        repository.saveLearnedWord(
+                email,
+                cleanLabelEn,
+                labelVi,
+                cleanTranslatedText,
+                cleanTargetLang,
+                "streaming"
+        );
+
+        lastSavedTime.put(saveKey, now);
+
+        return true;
+    }
+
+    private boolean isTranslationReadyForHistory(String labelEn, String targetLang) {
+        String cleanTargetLang = safeTargetLang(targetLang);
+
+        if ("en".equalsIgnoreCase(cleanTargetLang)) {
+            return true;
+        }
+
+        String key = buildTranslationKey(labelEn, cleanTargetLang);
+        String cachedTranslation = translationCache.get(key);
+
+        return cachedTranslation != null && !cachedTranslation.trim().isEmpty();
+    }
+
+    private String getTranslationForHistory(String labelEn, String targetLang) {
+        String cleanTargetLang = safeTargetLang(targetLang);
+
+        if ("en".equalsIgnoreCase(cleanTargetLang)) {
+            return safeTrim(labelEn);
+        }
+
+        String key = buildTranslationKey(labelEn, cleanTargetLang);
+        String cachedTranslation = translationCache.get(key);
+
+        return safeTrim(cachedTranslation);
+    }
+
+    private String buildLabelViForHistory(
+            String labelEn,
+            String targetLang,
+            String translatedText
+    ) {
+        String cleanTargetLang = safeTargetLang(targetLang);
+
+        if ("vi".equalsIgnoreCase(cleanTargetLang)) {
+            return safeTrim(translatedText);
+        }
+
+        String vi = safeTrim(VocabMap.getVI(labelEn));
+
+        if (vi.equalsIgnoreCase(safeTrim(labelEn))) {
+            return "";
+        }
+
+        return vi;
+    }
+
+    private String safeTargetLang(String targetLang) {
+        if (targetLang == null || targetLang.trim().isEmpty()) {
+            return currentTargetCode;
+        }
+
+        return targetLang.trim().toLowerCase(Locale.US);
+    }
+
+    private String safeTrim(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void speakDetection(BoundingBoxOverlayView.DetectionItem item) {
@@ -1049,6 +1351,11 @@ public class StreamingFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        if (cameraProvider != null) {
+            cameraProvider.unbindAll();
+            cameraProvider = null;
+        }
 
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
